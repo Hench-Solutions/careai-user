@@ -6,7 +6,7 @@ const imageHostnames = (process.env.NEXT_PUBLIC_IMAGE_HOSTS ?? "")
   .map((host) => host.trim())
   .filter(Boolean);
 
-/** Sensible CSP for a static marketing/template site without breaking Next.js. */
+/** Content Security Policy for the CareAI user web app. */
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
@@ -51,7 +51,6 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Next.js 16.4 recommends Cache Components for new apps (create-next-app default).
   cacheComponents: true,
   partialPrefetching: true,
   // Always-on React Compiler; Rust path via Turbopack when available.

@@ -1,0 +1,495 @@
+/**
+ * Login page — ported from login/login1.html (scoped under .careai-login).
+ */
+.careai-login {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--color-login-bg);
+  font-family: var(--font-care-login);
+  -webkit-font-smoothing: antialiased;
+}
+
+.careai-login .back-link {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-login-muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.careai-login .back-link:hover {
+  color: var(--color-login-label);
+}
+
+.careai-login .login-card {
+  width: 100%;
+  max-width: 500px;
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 36px 26px;
+  border: 1px solid var(--color-login-border);
+  box-shadow: var(--shadow-care-login);
+}
+
+.careai-login .card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.careai-login .logo-box {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    var(--color-login-accent) 0%,
+    var(--color-login-accent-end) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-login-logo);
+  color: #fff;
+}
+
+.careai-login .logo-box svg {
+  width: 22px;
+  height: 22px;
+}
+
+.careai-login .head-text h1 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-login-ink);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.careai-login .head-text p {
+  font-size: 12px;
+  color: var(--color-login-sub);
+  margin-top: 2px;
+}
+
+.careai-login .auth-tabs {
+  display: flex;
+  background: var(--color-login-tab-bg);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 18px;
+}
+
+.careai-login .auth-tab {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-login-muted);
+  cursor: pointer;
+  transition: all 0.22s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.careai-login .auth-tab.active {
+  background: linear-gradient(
+    135deg,
+    var(--color-login-accent) 0%,
+    var(--color-login-accent-end) 100%
+  );
+  color: #fff;
+  box-shadow: var(--shadow-login-tab-active);
+}
+
+.careai-login .auth-tab:not(.active):hover {
+  color: var(--color-login-accent);
+  background: var(--color-login-tab-hover-bg);
+}
+
+.careai-login .section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-login-section);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.careai-login .role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.careai-login .role-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--color-login-role-locked-border);
+  border-radius: 11px;
+  background: var(--color-login-field-bg);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+  font-family: inherit;
+  text-align: left;
+}
+
+.careai-login .role-btn:hover:not(.locked) {
+  border-color: var(--color-login-role-hover-border);
+  background: var(--color-login-role-hover-bg);
+}
+
+.careai-login .role-btn.active {
+  border-color: var(--color-login-accent);
+  background: linear-gradient(
+    135deg,
+    var(--color-login-role-active-bg-start) 0%,
+    var(--color-login-role-active-bg-end) 100%
+  );
+  box-shadow: var(--shadow-login-role-ring);
+}
+
+.careai-login .role-btn.locked {
+  cursor: not-allowed;
+  opacity: 0.7;
+  border-color: var(--color-login-role-locked-border);
+  background: var(--color-login-role-locked-panel);
+}
+
+.careai-login .role-btn.locked:hover {
+  border-color: var(--color-login-role-locked-border);
+  background: var(--color-login-role-locked-panel);
+}
+
+.careai-login .r-icon-wrap {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 8px;
+  background: var(--color-login-role-icon-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s;
+}
+
+.careai-login .role-btn.active .r-icon-wrap {
+  background: linear-gradient(
+    135deg,
+    var(--color-login-accent) 0%,
+    var(--color-login-accent-end) 100%
+  );
+  box-shadow: var(--shadow-login-role-icon);
+}
+
+.careai-login .role-btn.locked .r-icon-wrap {
+  background: var(--color-login-role-locked-bg);
+}
+
+.careai-login .r-icon-wrap svg {
+  width: 13px;
+  height: 13px;
+  color: var(--color-login-role-icon);
+  transition: color 0.18s;
+}
+
+.careai-login .role-btn.active .r-icon-wrap svg {
+  color: #fff;
+}
+
+.careai-login .role-btn.locked .r-icon-wrap svg {
+  color: var(--color-login-muted);
+}
+
+.careai-login .r-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-login-label);
+  transition: color 0.18s;
+}
+
+.careai-login .role-btn.active .r-name {
+  color: var(--color-login-role-active);
+}
+
+.careai-login .tick {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--color-login-accent) 0%,
+    var(--color-login-accent-end) 100%
+  );
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.careai-login .tick svg {
+  width: 7px;
+  height: 7px;
+  color: #fff;
+}
+
+.careai-login .role-btn.active .tick {
+  display: flex;
+}
+
+.careai-login .tick.locked {
+  display: flex;
+  background: var(--color-login-muted);
+}
+
+.careai-login .role-hint {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--color-login-muted);
+  margin-bottom: 16px;
+}
+
+.careai-login .divider {
+  height: 1px;
+  background: var(--color-login-divider);
+  margin: 14px 0;
+}
+
+.careai-login .field-group {
+  margin-bottom: 12px;
+}
+
+.careai-login .field-group > .field-label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.careai-login .field-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.careai-login .field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-login-label);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.careai-login .forgot-link {
+  font-size: 11px;
+  color: var(--color-login-accent);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.careai-login .forgot-link:hover {
+  text-decoration: underline;
+}
+
+.careai-login .input-wrap {
+  position: relative;
+}
+
+.careai-login .input-icon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-login-placeholder);
+  pointer-events: none;
+  transition: color 0.18s;
+}
+
+.careai-login .input-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.careai-login .input-wrap:focus-within .input-icon {
+  color: var(--color-login-accent);
+}
+
+.careai-login .form-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px 0 36px;
+  border: 1.5px solid var(--color-login-field-border);
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-login-ink);
+  background: var(--color-login-field-bg);
+  outline: none;
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s,
+    background 0.18s;
+}
+
+.careai-login .form-input:focus {
+  border-color: var(--color-login-accent);
+  background: #fff;
+  box-shadow: var(--shadow-login-field-focus);
+}
+
+.careai-login .form-input::placeholder {
+  color: var(--color-login-placeholder);
+}
+
+.careai-login .pwd-input {
+  padding-right: 38px;
+}
+
+.careai-login .pwd-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-login-placeholder);
+  padding: 0;
+  transition: color 0.18s;
+}
+
+.careai-login .pwd-toggle svg {
+  width: 13px;
+  height: 13px;
+}
+
+.careai-login .pwd-toggle:hover {
+  color: var(--color-login-accent);
+}
+
+.careai-login .btn-signin {
+  width: 100%;
+  height: 44px;
+  background: linear-gradient(
+    135deg,
+    var(--color-login-accent) 0%,
+    var(--color-login-accent-end) 100%
+  );
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-login-submit);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.careai-login .btn-signin svg {
+  width: 16px;
+  height: 16px;
+}
+
+.careai-login .btn-signin:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-login-submit-hover);
+}
+
+.careai-login .btn-signin:active {
+  transform: scale(0.987);
+}
+
+.careai-login .msg {
+  font-size: 11px;
+  text-align: center;
+  margin-top: 8px;
+  min-height: 14px;
+}
+
+.careai-login .msg.error {
+  color: var(--color-care-red);
+}
+
+.careai-login .msg.success {
+  color: var(--color-login-success);
+}
+
+.careai-login .card-foot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-login-divider);
+}
+
+.careai-login .card-foot span {
+  font-size: 12px;
+  color: var(--color-login-muted);
+}
+
+.careai-login .foot-link {
+  font-size: 12px;
+  color: var(--color-login-accent);
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.careai-login .foot-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 520px) {
+  .careai-login .login-card {
+    padding: 22px 18px 20px;
+  }
+
+  .careai-login .role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .careai-login .card-foot {
+    flex-direction: column;
+    gap: 6px;
+  }
+}

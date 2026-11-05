@@ -1,0 +1,67 @@
+/**
+ * CareAI design tokens — use with Tailwind utilities (bg-care-purple, text-care-sub, etc.).
+ */
+@theme inline {
+  --font-care: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
+  --font-care-login: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-care-purple: #6b2fd9;
+  --color-care-purple-dark: #4c1d95;
+  --color-care-pink: #d6238c;
+  --color-care-coral: #e8774a;
+  --color-care-blue: #2b8fe0;
+  --color-care-green: #16a34a;
+  --color-care-amber: #f59e0b;
+  --color-care-red: #ef4444;
+  --color-care-ink: #1a1a2e;
+  --color-care-sub: #6b7280;
+  --color-care-line: #edebf3;
+  --color-care-bg: #f6f5fb;
+  --color-care-card: #ffffff;
+  --color-care-nav-muted: #b3acc7;
+  --color-care-nav-ink: #5b5670;
+  --color-care-search: #9c97ac;
+  --color-care-success: #10b981;
+  --color-care-nav-hover: #f7f1fe;
+  --color-care-control-hover: #eeebf6;
+
+  --color-login-bg: #f4f5f9;
+  --color-login-border: #e8e9f0;
+  --color-login-muted: #9ca3af;
+  --color-login-ink: #111827;
+  --color-login-label: #374151;
+  --color-login-field-bg: #fafbff;
+  --color-login-tab-bg: #f2f3f8;
+  --color-login-accent: #667eea;
+  --color-login-accent-end: #764fa2;
+  --color-login-sub: #a0a8b8;
+  --color-login-section: #c4c8d4;
+  --color-login-role-active: #4f46e5;
+  --color-login-role-icon: #a5b0c8;
+  --color-login-placeholder: #d1d5db;
+  --color-login-divider: #f1f2f6;
+  --color-login-success: #10b981;
+  --color-login-role-icon-bg: #eef0fb;
+  --color-login-role-locked-bg: #e5e7eb;
+  --color-login-role-locked-border: #eaebf2;
+  --color-login-role-locked-panel: #f2f3f8;
+  --color-login-field-border: #e5e7eb;
+
+  --shadow-care: 0 6px 20px rgb(107 47 217 / 0.08);
+  --shadow-care-nav-active: 0 6px 16px rgb(214 35 140 / 0.28);
+  --shadow-care-login:
+    0 8px 32px rgb(102 126 234 / 0.09), 0 2px 8px rgb(0 0 0 / 0.04);
+  --shadow-login-logo: 0 4px 12px rgb(102 126 234 / 0.35);
+  --shadow-login-tab-active: 0 2px 10px rgb(102 126 234 / 0.38);
+  --shadow-login-role-ring: 0 0 0 3px rgb(102 126 234 / 0.12);
+  --shadow-login-role-icon: 0 2px 8px rgb(102 126 234 / 0.32);
+  --shadow-login-field-focus: 0 0 0 3px rgb(102 126 234 / 0.1);
+  --shadow-login-submit: 0 4px 16px rgb(102 126 234 / 0.36);
+  --shadow-login-submit-hover: 0 8px 24px rgb(102 126 234 / 0.42);
+
+  --color-login-role-hover-border: #c7d2fe;
+  --color-login-role-hover-bg: #f5f6ff;
+  --color-login-tab-hover-bg: rgb(102 126 234 / 0.06);
+  --color-login-role-active-bg-start: rgb(102 126 234 / 0.08);
+  --color-login-role-active-bg-end: rgb(118 75 162 / 0.08);
+}

@@ -2,10 +2,8 @@ import type { Metadata, Viewport } from "next";
 
 import "@/styles/globals.css";
 
-import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { ThemeProvider } from "@/components/theme-provider";
-import { siteConfig } from "@/config/site";
-import * as fonts from "@/lib/fonts";
+import { noIndexRobots, siteConfig } from "@/config/site";
+import { inter } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
 const jsonLd = {
@@ -19,15 +17,14 @@ const jsonLd = {
       url: siteConfig.url,
       inLanguage: "en-US",
       publisher: {
-        "@type": "Person",
-        name: siteConfig.creator,
-        url: siteConfig.authors[0]?.url,
+        "@type": "Organization",
+        name: siteConfig.publisher,
       },
     },
     {
       "@type": "SoftwareApplication",
       name: siteConfig.name,
-      applicationCategory: "DeveloperApplication",
+      applicationCategory: "HealthApplication",
       operatingSystem: "Any",
       url: siteConfig.url,
       description: siteConfig.description,
@@ -35,11 +32,6 @@ const jsonLd = {
         "@type": "Offer",
         price: "0",
         priceCurrency: "USD",
-      },
-      author: {
-        "@type": "Person",
-        name: siteConfig.creator,
-        url: siteConfig.authors[0]?.url,
       },
     },
   ],
@@ -51,28 +43,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={cn(
-          fonts.outfit.variable,
-          fonts.dmSans.variable,
-          fonts.mono.variable,
-          "min-h-dvh scroll-smooth font-sans antialiased",
-        )}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-          />
-          {children}
-          <TailwindIndicator />
-        </ThemeProvider>
+    <html lang="en">
+      <body className={cn(inter.variable, "min-h-dvh antialiased")}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        {children}
       </body>
     </html>
   );
@@ -84,11 +61,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  colorScheme: "light dark",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f1eb" },
-    { media: "(prefers-color-scheme: dark)", color: "#12141a" },
-  ],
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#6B2FD9" }],
 };
 
 export const metadata: Metadata = {
@@ -107,14 +80,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
-  robots: {
-    index: siteConfig.robots.index,
-    follow: siteConfig.robots.follow,
-    googleBot: {
-      index: siteConfig.robots.index,
-      follow: siteConfig.robots.follow,
-    },
-  },
+  robots: noIndexRobots,
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -135,8 +101,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    site: siteConfig.twitter.site,
-    creator: siteConfig.twitter.handle,
     images: [siteConfig.ogImage],
   },
   icons: {
@@ -158,5 +122,5 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   manifest: "/site.webmanifest",
-  category: "technology",
+  category: "health",
 };
