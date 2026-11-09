@@ -1,6 +1,7 @@
 "use client";
 
 import { CareaiErrorPage } from "@/components/careai/careai-error-page";
+import { ROUTES } from "@/config/routes";
 
 export default function PatientPortalError({
   error,
@@ -15,7 +16,7 @@ export default function PatientPortalError({
       description="We couldn't load this page. Try again or return to your dashboard."
       error={error}
       onRetry={reset}
-      backHref="/patient/dashboard"
+      backHref={ROUTES.patient.dashboard}
       backLabel="Back to dashboard"
     />
   );

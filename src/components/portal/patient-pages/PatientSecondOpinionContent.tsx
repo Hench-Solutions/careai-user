@@ -1,18 +1,13 @@
-"use client";
-
-import {
-  careaiOptionsFromLabels,
-  CareaiSelect,
-} from "@/components/careai/careai-select";
+import { CareaiSelect } from "@/components/careai/careai-select";
+import { careaiOptionsFromLabels } from "@/components/careai/select-options";
 import {
   FeatureGrid,
   FormConfidentialNote,
-  PgFormSuccess,
   SectionHeader,
   ServiceHero,
   StatsRow,
 } from "@/components/portal/patient-pages/patient-page-blocks";
-import { usePgFormSubmit } from "@/components/portal/use-pg-form";
+import { PgForm } from "@/components/portal/patient-pages/pg-form";
 
 const OPINION_STATS = [
   { num: "3–5", lbl: "Days Standard Turnaround" },
@@ -72,8 +67,6 @@ const WHEN_FEATURES = [
 ];
 
 export function PatientSecondOpinionContent() {
-  const { submitted, onSubmit } = usePgFormSubmit();
-
   return (
     <>
       <ServiceHero
@@ -122,101 +115,97 @@ export function PatientSecondOpinionContent() {
             title="Submit Your Case"
           />
 
-          {!submitted ?
-            <form className="pg-form mt-[18px]" onSubmit={onSubmit}>
-              <div className="pg-field">
-                <label>
-                  Full Name <span className="pg-required">*</span>
-                </label>
-                <input type="text" placeholder="Patient's full name" required />
-              </div>
-              <div className="pg-field">
-                <label>
-                  Email Address <span className="pg-required">*</span>
-                </label>
-                <input type="email" placeholder="you@example.com" required />
-              </div>
-              <div className="pg-field">
-                <label>
-                  Phone Number <span className="pg-required">*</span>
-                </label>
-                <input type="tel" placeholder="+91 98765 43210" required />
-              </div>
-              <div className="pg-field">
-                <label>
-                  Current Diagnosis <span className="pg-required">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Stage II Breast Cancer"
-                  required
-                />
-              </div>
-              <div className="pg-field">
-                <label>Preferred Specialty</label>
-                <CareaiSelect
-                  defaultValue="Oncology"
-                  options={careaiOptionsFromLabels([
-                    "Oncology",
-                    "Cardiology",
-                    "Orthopedics",
-                    "Neurology",
-                  ])}
-                />
-              </div>
-              <div className="pg-field">
-                <label>Urgency</label>
-                <CareaiSelect
-                  defaultValue="Standard (3–5 days)"
-                  options={careaiOptionsFromLabels([
-                    "Standard (3–5 days)",
-                    "Urgent (24–48 hrs)",
-                  ])}
-                />
-              </div>
-              <label className="pg-upload full" htmlFor="second-opinion-upload">
-                <input
-                  id="second-opinion-upload"
-                  type="file"
-                  className="pg-file-input"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  multiple
-                />
-                <svg
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 3v12M7 8l5-5 5 5" />
-                  <path d="M5 21h14" />
-                </svg>
-                <p>
-                  <span className="browse">Click to upload</span> or drag
-                  reports, scans & lab results here
-                </p>
+          <PgForm
+            className="mt-[18px]"
+            successTitle="Case Submitted for Review"
+            successMessage="Thank you — a specialist will review your case and your written report will be ready within the selected timeframe."
+          >
+            <div className="pg-field">
+              <label>
+                Full Name <span className="pg-required">*</span>
               </label>
-              <div className="pg-field full">
-                <label>Additional Notes</label>
-                <textarea placeholder="Anything the reviewing specialist should know." />
-              </div>
-              <div className="full">
-                <button className="pg-btn solid" type="submit">
-                  Submit for Review
-                </button>
-                <FormConfidentialNote>
-                  Your records are reviewed only by the assigned specialist and
-                  kept confidential.
-                </FormConfidentialNote>
-              </div>
-            </form>
-          : null}
-
-          <PgFormSuccess
-            show={submitted}
-            title="Case Submitted for Review"
-            message="Thank you — a specialist will review your case and your written report will be ready within the selected timeframe."
-          />
+              <input type="text" placeholder="Patient's full name" required />
+            </div>
+            <div className="pg-field">
+              <label>
+                Email Address <span className="pg-required">*</span>
+              </label>
+              <input type="email" placeholder="you@example.com" required />
+            </div>
+            <div className="pg-field">
+              <label>
+                Phone Number <span className="pg-required">*</span>
+              </label>
+              <input type="tel" placeholder="+91 98765 43210" required />
+            </div>
+            <div className="pg-field">
+              <label>
+                Current Diagnosis <span className="pg-required">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Stage II Breast Cancer"
+                required
+              />
+            </div>
+            <div className="pg-field">
+              <label>Preferred Specialty</label>
+              <CareaiSelect
+                defaultValue="Oncology"
+                options={careaiOptionsFromLabels([
+                  "Oncology",
+                  "Cardiology",
+                  "Orthopedics",
+                  "Neurology",
+                ])}
+              />
+            </div>
+            <div className="pg-field">
+              <label>Urgency</label>
+              <CareaiSelect
+                defaultValue="Standard (3–5 days)"
+                options={careaiOptionsFromLabels([
+                  "Standard (3–5 days)",
+                  "Urgent (24–48 hrs)",
+                ])}
+              />
+            </div>
+            <label className="pg-upload full" htmlFor="second-opinion-upload">
+              <input
+                id="second-opinion-upload"
+                type="file"
+                className="pg-file-input"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                multiple
+              />
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 3v12M7 8l5-5 5 5" />
+                <path d="M5 21h14" />
+              </svg>
+              <p>
+                <span className="browse">Click to upload</span> or drag reports,
+                scans & lab results here
+              </p>
+            </label>
+            <div className="pg-field full">
+              <label>Additional Notes</label>
+              <textarea placeholder="Anything the reviewing specialist should know." />
+            </div>
+            <div className="full">
+              <button className="pg-btn solid" type="submit">
+                Submit for Review
+              </button>
+              <FormConfidentialNote>
+                Your records are reviewed only by the assigned specialist and
+                kept confidential.
+              </FormConfidentialNote>
+            </div>
+          </PgForm>
         </div>
       </div>
 

@@ -1,5 +1,7 @@
 import type { AccountRole } from "@/config/auth";
 
+import { accountRoles } from "@/config/auth";
+
 export const CAREAI_SESSION_STORAGE_KEY = "careai.session.v1";
 
 export const CAREAI_SESSION_CHANGE_EVENT = "careai-session-change";
@@ -8,6 +10,8 @@ export type CareaiSession = {
   role: AccountRole;
   email: string;
   name?: string;
+  /** Agent_Cd / Member_Id from portal sign-in. */
+  userCd?: string;
 };
 
 /** Cached parse result; `lastRaw` is undefined until first client read. */
@@ -24,10 +28,10 @@ function parseSession(raw: string | null): CareaiSession | null {
   }
   try {
     const data = JSON.parse(raw) as CareaiSession;
-    if (data.role !== "patient" && data.role !== "facilitator") {
+    if (!accountRoles.includes(data.role)) {
       return null;
     }
-    if (typeof data.email !== "string" || !data.email.trim()) {
+    if (typeof data.email !== "string") {
       return null;
     }
     return data;

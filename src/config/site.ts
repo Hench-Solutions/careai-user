@@ -14,6 +14,10 @@ const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "")
   : "http://localhost:3000";
 
+export const SITEMAP_PATH = "/sitemap.xml";
+
+const OG_IMAGE_PATH = "/og.png";
+
 /** Authenticated or sign-in routes — keep out of search indexes. */
 export const noIndexRobots: NonNullable<Metadata["robots"]> = {
   index: false,
@@ -47,5 +51,5 @@ export const siteConfig = {
     "care agent",
   ],
 
-  ogImage: `${baseUrl}/og.png`,
+  ogImage: `${baseUrl}${OG_IMAGE_PATH}`,
 };

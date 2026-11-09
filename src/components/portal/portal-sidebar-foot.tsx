@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { LogOut } from "lucide-react";
 
+import { ROUTES } from "@/config/routes";
 import { useCareaiSession } from "@/hooks/use-careai-session";
 import { clearCareaiSession, sessionInitials } from "@/lib/careai/session";
 
@@ -28,7 +29,7 @@ export const PortalSidebarFoot = memo(function PortalSidebarFoot({
 
   const handleLogout = () => {
     clearCareaiSession();
-    router.replace("/login");
+    router.replace(ROUTES.login);
   };
 
   return (

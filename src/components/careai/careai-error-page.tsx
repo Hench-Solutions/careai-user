@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { ROUTES } from "@/config/routes";
+
 type CareaiErrorPageProps = {
   eyebrow?: string;
   title: string;
@@ -22,7 +24,7 @@ export function CareaiErrorPage({
   error,
   onRetry,
   retryLabel = "Try again",
-  backHref = "/login",
+  backHref = ROUTES.login,
   backLabel = "Go to sign in",
 }: CareaiErrorPageProps) {
   const devMessage = error?.message?.trim();

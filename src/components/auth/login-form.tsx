@@ -27,10 +27,17 @@ import {
   roleLabels,
   signInRoles,
 } from "@/config/auth";
+import {
+  AUTH_MESSAGES,
+  LOGIN_ID_FIELD,
+  MIN_PASSWORD_LENGTH,
+} from "@/config/auth-messages";
+import { ROUTES } from "@/config/routes";
 import { useCareaiSession } from "@/hooks/use-careai-session";
 import { careaiLogin } from "@/lib/careai/classes";
 import { readCareaiSession, writeCareaiSession } from "@/lib/careai/session";
 import { cn } from "@/lib/utils";
+import { patientSignup, portalLogin } from "@/services/auth";
 
 const roleIcons: Record<AccountRole, typeof UserRound> = {
   patient: UserRound,
@@ -45,6 +52,8 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<{
     text: string;
@@ -68,56 +77,82 @@ export function LoginForm() {
     }
   }, []);
 
-  const handleSubmit = () => {
-    if (!selectedRole) {
-      setMessage({ text: "Please select your account type.", type: "error" });
-      return;
-    }
-    if (tab === "signup" && !canSelfRegister(selectedRole)) {
-      setMessage({
-        text: "Agent accounts are created by an administrator. Please sign in or contact support.",
-        type: "error",
-      });
-      return;
-    }
-    if (tab === "signup" && !name.trim()) {
-      setMessage({ text: "Please enter your full name.", type: "error" });
-      return;
-    }
-    if (!email.trim()) {
-      setMessage({ text: "Please enter your email address.", type: "error" });
-      return;
-    }
-    if (!password) {
-      setMessage({ text: "Please enter your password.", type: "error" });
-      return;
-    }
+  const isSignIn = tab === "signin";
+  const idField = LOGIN_ID_FIELD[selectedRole];
 
-    setMessage({
-      text:
-        tab === "signin" ?
-          `Signing in as ${roleLabels[selectedRole]}…`
-        : "Creating your patient account…",
-      type: "success",
-    });
+  const fail = (text: string) => setMessage({ text, type: "error" });
 
-    writeCareaiSession({
-      role: selectedRole,
-      email: email.trim(),
-      name: tab === "signup" ? name.trim() : undefined,
-    });
-
-    const destination = dashboardPathForRole(selectedRole);
-    window.setTimeout(() => {
-      router.push(destination);
-    }, 400);
+  const validate = (): string | null => {
+    if (isSignIn) {
+      if (!loginId.trim()) {
+        return AUTH_MESSAGES.loginIdRequired(idField.label);
+      }
+      return password ? null : AUTH_MESSAGES.passwordRequired;
+    }
+    if (!canSelfRegister(selectedRole)) {
+      return AUTH_MESSAGES.agentSignupBlocked;
+    }
+    if (!name.trim()) return AUTH_MESSAGES.nameRequired;
+    if (!email.trim()) return AUTH_MESSAGES.emailRequired;
+    if (!password) return AUTH_MESSAGES.passwordRequired;
+    if (password.length < MIN_PASSWORD_LENGTH)
+      return AUTH_MESSAGES.passwordTooShort;
+    return null;
   };
 
-  const isSignIn = tab === "signin";
+  const signIn = async () => {
+    setMessage({
+      text: AUTH_MESSAGES.signingIn(roleLabels[selectedRole]),
+      type: "success",
+    });
+    try {
+      const user = await portalLogin(selectedRole, loginId.trim(), password);
+      writeCareaiSession({
+        role: selectedRole,
+        email: user.email_Id,
+        name: user.user_Full_Name,
+        userCd: user.user_Cd,
+      });
+      // Next keeps this page mounted after navigation; don't leave credentials for the next visit.
+      setLoginId("");
+      setPassword("");
+      setMessage(null);
+      router.push(dashboardPathForRole(selectedRole));
+    } catch (err) {
+      fail(err instanceof Error ? err.message : AUTH_MESSAGES.signInFailed);
+    }
+    setSubmitting(false);
+  };
+
+  const signUp = async () => {
+    setMessage({ text: AUTH_MESSAGES.creatingAccount, type: "success" });
+    try {
+      const user = await patientSignup(name.trim(), email.trim(), password);
+      setTab("signin");
+      setLoginId(user.user_Cd);
+      setPassword("");
+      setMessage({
+        text: AUTH_MESSAGES.accountCreated(user.user_Cd),
+        type: "success",
+      });
+    } catch (err) {
+      fail(err instanceof Error ? err.message : AUTH_MESSAGES.signUpFailed);
+    }
+    setSubmitting(false);
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+    const error = validate();
+    if (error) return fail(error);
+    setSubmitting(true);
+    void (isSignIn ? signIn() : signUp());
+  };
 
   return (
     <div className={careaiLogin.root}>
-      <Link href="/" className={careaiLogin.backLink}>
+      <Link href={ROUTES.home} className={careaiLogin.backLink}>
         <ArrowLeft size={14} aria-hidden />
         Back to Home
       </Link>
@@ -166,15 +201,13 @@ export function LoginForm() {
                 type="button"
                 aria-disabled={locked}
                 title={
-                  locked ?
-                    "Agent accounts are created by an administrator"
-                  : undefined
+                  locked ? AUTH_MESSAGES.agentSignupLockedTitle : undefined
                 }
                 className={careaiLogin.roleBtn(active, locked)}
                 onClick={() => {
                   if (locked) {
                     setMessage({
-                      text: "Agent accounts are created by an administrator. Please sign in or contact support.",
+                      text: AUTH_MESSAGES.agentSignupBlocked,
                       type: "error",
                     });
                     return;
@@ -212,100 +245,110 @@ export function LoginForm() {
 
         <div className="divider" />
 
-        {tab === "signup" ?
+        <form onSubmit={handleSubmit} noValidate>
+          {tab === "signup" ?
+            <div className="field-group">
+              <label className="field-label" htmlFor="name-input">
+                Full Name
+              </label>
+              <div className="input-wrap">
+                <span className="input-icon">
+                  <User aria-hidden />
+                </span>
+                <input
+                  className="form-input"
+                  type="text"
+                  id="name-input"
+                  placeholder="Your full name"
+                  autoComplete="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            </div>
+          : null}
+
           <div className="field-group">
-            <label className="field-label" htmlFor="name-input">
-              Full Name
+            <label className="field-label" htmlFor="email-input">
+              {!isSignIn ? "Email Address" : idField.label}
             </label>
             <div className="input-wrap">
               <span className="input-icon">
-                <User aria-hidden />
+                <Mail aria-hidden />
               </span>
               <input
                 className="form-input"
-                type="text"
-                id="name-input"
-                placeholder="Your full name"
-                autoComplete="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                type={isSignIn ? "text" : "email"}
+                id="email-input"
+                placeholder={
+                  !isSignIn ? "you@example.com" : idField.placeholder
+                }
+                autoComplete={isSignIn ? "username" : "email"}
+                value={isSignIn ? loginId : email}
+                onChange={(e) =>
+                  isSignIn ?
+                    setLoginId(e.target.value)
+                  : setEmail(e.target.value)
+                }
               />
             </div>
           </div>
-        : null}
 
-        <div className="field-group">
-          <label className="field-label" htmlFor="email-input">
-            Email Address
-          </label>
-          <div className="input-wrap">
-            <span className="input-icon">
-              <Mail aria-hidden />
-            </span>
-            <input
-              className="form-input"
-              type="email"
-              id="email-input"
-              placeholder="you@example.com"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+          <div className="field-group">
+            <div className="field-top">
+              <label className="field-label" htmlFor="password-input">
+                Password
+              </label>
+              {isSignIn ?
+                <a href="#" className="forgot-link">
+                  Forgot password?
+                </a>
+              : null}
+            </div>
+            <div className="input-wrap">
+              <span className="input-icon">
+                <Lock aria-hidden />
+              </span>
+              <input
+                className="form-input pwd-input"
+                type={showPassword ? "text" : "password"}
+                id="password-input"
+                placeholder="Enter your password"
+                autoComplete={isSignIn ? "current-password" : "new-password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                className="pwd-toggle"
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ?
+                  <EyeOff aria-hidden />
+                : <Eye aria-hidden />}
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="field-group">
-          <div className="field-top">
-            <label className="field-label" htmlFor="password-input">
-              Password
-            </label>
+          <button className="btn-signin" type="submit" disabled={submitting}>
             {isSignIn ?
-              <a href="#" className="forgot-link">
-                Forgot password?
-              </a>
-            : null}
-          </div>
-          <div className="input-wrap">
-            <span className="input-icon">
-              <Lock aria-hidden />
-            </span>
-            <input
-              className="form-input pwd-input"
-              type={showPassword ? "text" : "password"}
-              id="password-input"
-              placeholder="Enter your password"
-              autoComplete={isSignIn ? "current-password" : "new-password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              className="pwd-toggle"
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ?
-                <EyeOff aria-hidden />
-              : <Eye aria-hidden />}
-            </button>
-          </div>
-        </div>
-
-        <button className="btn-signin" type="button" onClick={handleSubmit}>
-          {isSignIn ?
-            <LogIn aria-hidden />
-          : <UserPlus aria-hidden />}
-          <span>{isSignIn ? "Sign In" : "Create Account"}</span>
-        </button>
-        <p
-          className={cn(
-            "msg",
-            message?.type === "error" && "error",
-            message?.type === "success" && "success",
-          )}
-        >
-          {message?.text ?? ""}
-        </p>
+              <LogIn aria-hidden />
+            : <UserPlus aria-hidden />}
+            <span>{isSignIn ? "Sign In" : "Create Account"}</span>
+          </button>
+          <p
+            role="status"
+            aria-live="polite"
+            className={cn(
+              "msg",
+              message?.type === "error" && "error",
+              message?.type === "success" && "success",
+            )}
+          >
+            {message?.text ?? ""}
+          </p>
+        </form>
 
         <div className="card-foot">
           <span>
@@ -332,7 +375,7 @@ export function LoginForm() {
               </>
             }
           </span>
-          <Link href="/patient/contact-us" className="foot-link">
+          <Link href={ROUTES.patient.contactUs} className="foot-link">
             Contact Support
           </Link>
         </div>

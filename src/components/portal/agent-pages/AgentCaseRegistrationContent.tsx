@@ -5,10 +5,8 @@ import { useCallback, useRef, useState } from "react";
 import type { CareaiSelectHandle } from "@/components/careai/careai-select";
 
 import { CareaiDateField } from "@/components/careai/careai-date-field";
-import {
-  careaiOptionsFromLabels,
-  CareaiSelect,
-} from "@/components/careai/careai-select";
+import { CareaiSelect } from "@/components/careai/careai-select";
+import { careaiOptionsFromLabels } from "@/components/careai/select-options";
 import { careaiMockCaseRegistrationMemberId } from "@/config/careai-mock";
 import { cn } from "@/lib/utils";
 

@@ -8,6 +8,7 @@ import {
   careaiMockAgentDashboardActions,
   careaiMockAgentDashboardStats,
 } from "@/config/careai-mock";
+import { ROUTES } from "@/config/routes";
 import { useMockFeedback } from "@/hooks/use-mock-feedback";
 import { readCareaiMockStat } from "@/lib/careai/mock-stat";
 
@@ -74,7 +75,10 @@ export function AgentDashboardContent({
       </h1>
 
       <div className="lm-stats">
-        <Link href="/agent/case-status" className="lm-stat blue lm-stat-link">
+        <Link
+          href={ROUTES.agent.caseStatus}
+          className="lm-stat blue lm-stat-link"
+        >
           <div className="lm-stat-top">
             <div className="lm-stat-icon">
               <svg
@@ -91,7 +95,10 @@ export function AgentDashboardContent({
           <div className="lm-stat-label">Total of Cases</div>
           <div className="lm-stat-badge">{totalCases.badge}</div>
         </Link>
-        <Link href="/agent/case-status" className="lm-stat purple lm-stat-link">
+        <Link
+          href={ROUTES.agent.caseStatus}
+          className="lm-stat purple lm-stat-link"
+        >
           <div className="lm-stat-top">
             <div className="lm-stat-icon">
               <svg
@@ -108,7 +115,10 @@ export function AgentDashboardContent({
           <div className="lm-stat-label">Active Cases</div>
           <div className="lm-stat-badge">{activeCases.badge}</div>
         </Link>
-        <Link href="/agent/case-status" className="lm-stat green lm-stat-link">
+        <Link
+          href={ROUTES.agent.caseStatus}
+          className="lm-stat green lm-stat-link"
+        >
           <div className="lm-stat-top">
             <div className="lm-stat-icon">
               <svg
@@ -142,7 +152,7 @@ export function AgentDashboardContent({
               </div>
             </div>
             <div className="lm-qa-grid">
-              <Link href="/agent/case-registration" className="lm-qa-card">
+              <Link href={ROUTES.agent.caseRegistration} className="lm-qa-card">
                 <div className="lm-qa-icon">
                   <svg
                     fill="none"
@@ -157,7 +167,7 @@ export function AgentDashboardContent({
                 </div>
                 <div className="lm-qa-text">Case Registration</div>
               </Link>
-              <Link href="/agent/referral-invoice" className="lm-qa-card">
+              <Link href={ROUTES.agent.referralInvoice} className="lm-qa-card">
                 <div className="lm-qa-icon">
                   <svg
                     fill="none"
@@ -171,7 +181,7 @@ export function AgentDashboardContent({
                 </div>
                 <div className="lm-qa-text">Referral &amp; Invoice</div>
               </Link>
-              <Link href="/agent/case-status" className="lm-qa-card">
+              <Link href={ROUTES.agent.caseStatus} className="lm-qa-card">
                 <div className="lm-qa-icon">
                   <svg
                     fill="none"
@@ -185,7 +195,7 @@ export function AgentDashboardContent({
                 </div>
                 <div className="lm-qa-text">Case Status</div>
               </Link>
-              <Link href="/agent/action-required" className="lm-qa-card">
+              <Link href={ROUTES.agent.actionRequired} className="lm-qa-card">
                 <div className="lm-qa-icon">
                   <svg
                     fill="none"
@@ -219,7 +229,7 @@ export function AgentDashboardContent({
               </div>
               Action Required
             </div>
-            <Link href="/agent/action-required" className="lm-seeall">
+            <Link href={ROUTES.agent.actionRequired} className="lm-seeall">
               See all{" "}
               <svg
                 fill="none"
@@ -243,7 +253,7 @@ export function AgentDashboardContent({
                   className="lm-reminder lm-reminder-btn"
                   onClick={() => {
                     showFeedback(`Opening “${item.title}” (demo).`);
-                    router.push("/agent/action-required");
+                    router.push(ROUTES.agent.actionRequired);
                   }}
                 >
                   <div className={`lm-rem-icon ${item.iconTone}`}>

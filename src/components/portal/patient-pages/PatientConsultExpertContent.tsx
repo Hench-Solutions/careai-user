@@ -6,21 +6,18 @@ import type { CareaiSelectHandle } from "@/components/careai/careai-select";
 import type { SpecialistProfile } from "@/components/portal/patient-pages/patient-page-blocks";
 
 import { CareaiDateField } from "@/components/careai/careai-date-field";
-import {
-  careaiOptionsFromLabels,
-  CareaiSelect,
-} from "@/components/careai/careai-select";
+import { CareaiSelect } from "@/components/careai/careai-select";
+import { careaiOptionsFromLabels } from "@/components/careai/select-options";
 import {
   DoctorGrid,
   FormConfidentialNote,
-  PgFormSuccess,
   SectionHeader,
   ServiceHero,
   SpecialtyBadges,
   StatsRow,
   StepsList,
 } from "@/components/portal/patient-pages/patient-page-blocks";
-import { usePgFormSubmit } from "@/components/portal/use-pg-form";
+import { PgForm } from "@/components/portal/patient-pages/pg-form";
 
 const CONSULT_STATS = [
   { num: "180+", lbl: "Specialists Network" },
@@ -93,7 +90,6 @@ const SPECIALTY_LABELS = [
 ];
 
 export function PatientConsultExpertContent() {
-  const { submitted, onSubmit } = usePgFormSubmit();
   const specialistRef = useRef<CareaiSelectHandle>(null);
 
   const prefillSpecialist = useCallback((value: string) => {
@@ -208,101 +204,96 @@ export function PatientConsultExpertContent() {
           sub="Request a time and we'll confirm your appointment within 24 hours"
         />
 
-        {!submitted ?
-          <form className="pg-form" onSubmit={onSubmit}>
-            <div className="pg-field">
-              <label>
-                Full Name <span className="pg-required">*</span>
-              </label>
-              <input type="text" placeholder="Your full name" required />
-            </div>
-            <div className="pg-field">
-              <label>
-                Email Address <span className="pg-required">*</span>
-              </label>
-              <input type="email" placeholder="you@example.com" required />
-            </div>
-            <div className="pg-field">
-              <label>
-                Phone Number <span className="pg-required">*</span>
-              </label>
-              <input type="tel" placeholder="+91 98765 43210" required />
-            </div>
-            <div className="pg-field">
-              <label>Preferred Specialist</label>
-              <CareaiSelect
-                ref={specialistRef}
-                defaultValue=""
-                placeholder="No preference — match me with the best fit"
-                options={[
-                  {
-                    value: "",
-                    label: "No preference — match me with the best fit",
-                  },
-                  ...SPECIALISTS.map((s) => ({
-                    value: s.selectValue,
-                    label: s.selectValue,
-                  })),
-                ]}
-              />
-            </div>
-            <div className="pg-field">
-              <label>
-                Specialty Needed <span className="pg-required">*</span>
-              </label>
-              <CareaiSelect
-                required
-                defaultValue=""
-                placeholder="Select a specialty"
-                options={careaiOptionsFromLabels(SPECIALTY_LABELS, {
-                  label: "Select a specialty",
-                })}
-              />
-            </div>
-            <div className="pg-field">
-              <label>Preferred Date</label>
-              <CareaiDateField />
-            </div>
-            <div className="pg-field">
-              <label>Consultation Mode</label>
-              <CareaiSelect
-                defaultValue="Video Call"
-                options={careaiOptionsFromLabels([
-                  "Video Call",
-                  "Phone Call",
-                  "In-Person",
-                ])}
-              />
-            </div>
-            <div className="pg-field full">
-              <label>Reason for Consultation</label>
-              <textarea placeholder="Briefly describe your symptoms or what you'd like to discuss" />
-            </div>
-            <div className="full">
-              <button className="pg-btn solid" type="submit">
-                <svg
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M8 7V3M16 7V3M3 11h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
-                </svg>
-                Request Consultation
-              </button>
-              <FormConfidentialNote>
-                Your details are shared only with your assigned specialist and
-                coordinator.
-              </FormConfidentialNote>
-            </div>
-          </form>
-        : null}
-
-        <PgFormSuccess
-          show={submitted}
-          title="Consultation Requested"
-          message="Thank you — our team will confirm your appointment time and send joining details within 24 hours."
-        />
+        <PgForm
+          successTitle="Consultation Requested"
+          successMessage="Thank you — our team will confirm your appointment time and send joining details within 24 hours."
+        >
+          <div className="pg-field">
+            <label>
+              Full Name <span className="pg-required">*</span>
+            </label>
+            <input type="text" placeholder="Your full name" required />
+          </div>
+          <div className="pg-field">
+            <label>
+              Email Address <span className="pg-required">*</span>
+            </label>
+            <input type="email" placeholder="you@example.com" required />
+          </div>
+          <div className="pg-field">
+            <label>
+              Phone Number <span className="pg-required">*</span>
+            </label>
+            <input type="tel" placeholder="+91 98765 43210" required />
+          </div>
+          <div className="pg-field">
+            <label>Preferred Specialist</label>
+            <CareaiSelect
+              ref={specialistRef}
+              defaultValue=""
+              placeholder="No preference — match me with the best fit"
+              options={[
+                {
+                  value: "",
+                  label: "No preference — match me with the best fit",
+                },
+                ...SPECIALISTS.map((s) => ({
+                  value: s.selectValue,
+                  label: s.selectValue,
+                })),
+              ]}
+            />
+          </div>
+          <div className="pg-field">
+            <label>
+              Specialty Needed <span className="pg-required">*</span>
+            </label>
+            <CareaiSelect
+              required
+              defaultValue=""
+              placeholder="Select a specialty"
+              options={careaiOptionsFromLabels(SPECIALTY_LABELS, {
+                label: "Select a specialty",
+              })}
+            />
+          </div>
+          <div className="pg-field">
+            <label>Preferred Date</label>
+            <CareaiDateField />
+          </div>
+          <div className="pg-field">
+            <label>Consultation Mode</label>
+            <CareaiSelect
+              defaultValue="Video Call"
+              options={careaiOptionsFromLabels([
+                "Video Call",
+                "Phone Call",
+                "In-Person",
+              ])}
+            />
+          </div>
+          <div className="pg-field full">
+            <label>Reason for Consultation</label>
+            <textarea placeholder="Briefly describe your symptoms or what you'd like to discuss" />
+          </div>
+          <div className="full">
+            <button className="pg-btn solid" type="submit">
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M8 7V3M16 7V3M3 11h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+              </svg>
+              Request Consultation
+            </button>
+            <FormConfidentialNote>
+              Your details are shared only with your assigned specialist and
+              coordinator.
+            </FormConfidentialNote>
+          </div>
+        </PgForm>
       </div>
     </>
   );

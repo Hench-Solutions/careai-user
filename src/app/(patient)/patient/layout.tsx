@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import "@/styles/careai-portal.css";
 
-import { PatientPortalShell } from "@/components/portal/patient-portal-shell";
+import { PortalShell } from "@/components/portal/portal-shell";
 import { noIndexRobots } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -15,5 +15,5 @@ export default function PatientPortalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <PatientPortalShell>{children}</PatientPortalShell>;
+  return <PortalShell portal="patient">{children}</PortalShell>;
 }

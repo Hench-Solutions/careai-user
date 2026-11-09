@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ROUTES } from "@/config/routes";
+
 export default function NotFound() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-care-bg px-6 text-center font-care text-care-ink">
@@ -10,7 +12,7 @@ export default function NotFound() {
         out of date.
       </p>
       <Link
-        href="/login"
+        href={ROUTES.login}
         className="mt-2 cursor-pointer rounded-xl bg-linear-to-br from-care-purple to-care-pink px-5 py-2.5 text-sm font-bold text-white shadow-care"
       >
         Go to sign in

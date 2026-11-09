@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { AgentActionWidgetIcon } from "@/components/portal/agent-action-widget-icon";
 import { PortalMockBanner } from "@/components/portal/portal-mock-banner";
 import { careaiMockAgentActionItems } from "@/config/careai-mock";
+import { ROUTES } from "@/config/routes";
 import { useMockFeedback } from "@/hooks/use-mock-feedback";
 
 const PRIORITIES = ["All", "High", "Medium", "Low"] as const;
@@ -83,12 +84,12 @@ export function AgentActionRequiredContent() {
                       className="ar-btn ghost"
                       onClick={() => {
                         if (item.ghostLabel.includes("Invoice")) {
-                          router.push("/agent/referral-invoice");
+                          router.push(ROUTES.agent.referralInvoice);
                           showFeedback(item.ghostSuccess);
                           return;
                         }
                         if (item.caseId) {
-                          router.push("/agent/case-status");
+                          router.push(ROUTES.agent.caseStatus);
                         }
                         showFeedback(item.ghostSuccess);
                       }}
@@ -112,7 +113,7 @@ export function AgentActionRequiredContent() {
 
       {resolvedIds.length > 0 ?
         <p className="lm-back-row">
-          <Link href="/agent/dashboard" className="lm-back">
+          <Link href={ROUTES.agent.dashboard} className="lm-back">
             Back to dashboard
           </Link>
         </p>

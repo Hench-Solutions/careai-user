@@ -1,3 +1,5 @@
+import { ROUTES } from "@/config/routes";
+
 /** Facilitator accounts use the agent (business) portal. */
 export const AGENT_ACCOUNT_ROLE = "facilitator" as const;
 
@@ -15,17 +17,12 @@ export const roleLabels: Record<AccountRole, string> = {
 export const signInRoles: AccountRole[] = ["patient", "facilitator"];
 
 /** Self-service registration is patient-only; agents are provisioned in the admin panel. */
-export const signUpRoles: AccountRole[] = ["patient"];
-
 export function canSelfRegister(role: AccountRole): boolean {
   return role === "patient";
 }
 
 export function dashboardPathForRole(role: AccountRole): string {
-  if (role === "patient") {
-    return "/patient/dashboard";
-  }
-  return "/agent/dashboard";
+  return role === "patient" ? ROUTES.patient.dashboard : ROUTES.agent.dashboard;
 }
 
 export function isAgentRole(role: AccountRole): boolean {

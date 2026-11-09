@@ -1,21 +1,16 @@
-"use client";
-
-import {
-  careaiOptionsFromLabels,
-  CareaiSelect,
-} from "@/components/careai/careai-select";
+import { CareaiSelect } from "@/components/careai/careai-select";
+import { careaiOptionsFromLabels } from "@/components/careai/select-options";
 import {
   CountryGrid,
   FeatureGrid,
   FormConfidentialNote,
-  PgFormSuccess,
   ProcedureTable,
   SectionHeader,
   ServiceHero,
   StatsRow,
   StepsList,
 } from "@/components/portal/patient-pages/patient-page-blocks";
-import { usePgFormSubmit } from "@/components/portal/use-pg-form";
+import { PgForm } from "@/components/portal/patient-pages/pg-form";
 
 const OVERSEAS_STATS = [
   { num: "6", lbl: "Partner Countries" },
@@ -160,8 +155,6 @@ const PROCEDURES = [
 ];
 
 export function PatientOverseasTreatmentContent() {
-  const { submitted, onSubmit } = usePgFormSubmit();
-
   return (
     <>
       <ServiceHero
@@ -282,114 +275,109 @@ export function PatientOverseasTreatmentContent() {
           sub="Tell us about your case — a coordinator will respond within 48 hours"
         />
 
-        {!submitted ?
-          <form className="pg-form" onSubmit={onSubmit}>
-            <div className="pg-field">
-              <label>
-                Full Name <span className="pg-required">*</span>
-              </label>
-              <input type="text" placeholder="Patient's full name" required />
-            </div>
-            <div className="pg-field">
-              <label>
-                Email Address <span className="pg-required">*</span>
-              </label>
-              <input type="email" placeholder="you@example.com" required />
-            </div>
-            <div className="pg-field">
-              <label>
-                Phone Number <span className="pg-required">*</span>
-              </label>
-              <input type="tel" placeholder="+91 98765 43210" required />
-            </div>
-            <div className="pg-field">
-              <label>Country of Residence</label>
-              <input type="text" placeholder="e.g. India" />
-            </div>
-            <div className="pg-field">
-              <label>Preferred Destination</label>
-              <CareaiSelect
-                defaultValue=""
-                placeholder="Select a country"
-                options={careaiOptionsFromLabels(
-                  [
-                    "India",
-                    "Turkey",
-                    "Thailand",
-                    "UAE",
-                    "Germany",
-                    "Not sure — recommend one",
-                  ],
-                  { label: "Select a country" },
-                )}
-              />
-            </div>
-            <div className="pg-field">
-              <label>
-                Procedure / Condition <span className="pg-required">*</span>
-              </label>
+        <PgForm
+          successTitle="Application Received"
+          successMessage="Thank you — a treatment coordinator will review your case and reach out within 48 hours with a personalized plan and quote."
+        >
+          <div className="pg-field">
+            <label>
+              Full Name <span className="pg-required">*</span>
+            </label>
+            <input type="text" placeholder="Patient's full name" required />
+          </div>
+          <div className="pg-field">
+            <label>
+              Email Address <span className="pg-required">*</span>
+            </label>
+            <input type="email" placeholder="you@example.com" required />
+          </div>
+          <div className="pg-field">
+            <label>
+              Phone Number <span className="pg-required">*</span>
+            </label>
+            <input type="tel" placeholder="+91 98765 43210" required />
+          </div>
+          <div className="pg-field">
+            <label>Country of Residence</label>
+            <input type="text" placeholder="e.g. India" />
+          </div>
+          <div className="pg-field">
+            <label>Preferred Destination</label>
+            <CareaiSelect
+              defaultValue=""
+              placeholder="Select a country"
+              options={careaiOptionsFromLabels(
+                [
+                  "India",
+                  "Turkey",
+                  "Thailand",
+                  "UAE",
+                  "Germany",
+                  "Not sure — recommend one",
+                ],
+                { label: "Select a country" },
+              )}
+            />
+          </div>
+          <div className="pg-field">
+            <label>
+              Procedure / Condition <span className="pg-required">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Cardiac Bypass Surgery"
+              required
+            />
+          </div>
+          <div className="pg-field full">
+            <label htmlFor="overseas-med-upload">
+              Medical Reports (optional)
+            </label>
+            <label className="pg-upload" htmlFor="overseas-med-upload">
               <input
-                type="text"
-                placeholder="e.g. Cardiac Bypass Surgery"
-                required
+                id="overseas-med-upload"
+                type="file"
+                className="pg-file-input"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                multiple
               />
-            </div>
-            <div className="pg-field full">
-              <label htmlFor="overseas-med-upload">
-                Medical Reports (optional)
-              </label>
-              <label className="pg-upload" htmlFor="overseas-med-upload">
-                <input
-                  id="overseas-med-upload"
-                  type="file"
-                  className="pg-file-input"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  multiple
-                />
-                <svg
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 3v12M7 8l5-5 5 5" />
-                  <path d="M5 21h14" />
-                </svg>
-                <p>
-                  <span className="browse">Click to upload</span> or drag
-                  reports, scans & prescriptions here
-                </p>
-              </label>
-            </div>
-            <div className="pg-field full">
-              <label>Additional Notes</label>
-              <textarea placeholder="Share any details that will help us plan your treatment — preferred travel dates, budget range, companion travel, etc." />
-            </div>
-            <div className="full">
-              <button className="pg-btn solid" type="submit">
-                <svg
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-                Submit Application
-              </button>
-              <FormConfidentialNote>
-                Your information is kept confidential and shared only with your
-                care team.
-              </FormConfidentialNote>
-            </div>
-          </form>
-        : null}
-
-        <PgFormSuccess
-          show={submitted}
-          title="Application Received"
-          message="Thank you — a treatment coordinator will review your case and reach out within 48 hours with a personalized plan and quote."
-        />
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 3v12M7 8l5-5 5 5" />
+                <path d="M5 21h14" />
+              </svg>
+              <p>
+                <span className="browse">Click to upload</span> or drag reports,
+                scans & prescriptions here
+              </p>
+            </label>
+          </div>
+          <div className="pg-field full">
+            <label>Additional Notes</label>
+            <textarea placeholder="Share any details that will help us plan your treatment — preferred travel dates, budget range, companion travel, etc." />
+          </div>
+          <div className="full">
+            <button className="pg-btn solid" type="submit">
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+              Submit Application
+            </button>
+            <FormConfidentialNote>
+              Your information is kept confidential and shared only with your
+              care team.
+            </FormConfidentialNote>
+          </div>
+        </PgForm>
       </div>
     </>
   );

@@ -1,5 +1,7 @@
 import type { PortalNavSection } from "@/components/portal/portal-sidebar";
 
+import { ROUTES } from "@/config/routes";
+
 const dashboardIcon = (
   <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
     <rect x="3" y="3" width="7" height="9" rx="2" />
@@ -15,10 +17,10 @@ export function getAgentNavSections(activeHref: string): PortalNavSection[] {
       label: "Overview",
       items: [
         {
-          href: "/agent/dashboard",
+          href: ROUTES.agent.dashboard,
           label: "Dashboard",
           icon: dashboardIcon,
-          active: activeHref === "/agent/dashboard",
+          active: activeHref === ROUTES.agent.dashboard,
         },
       ],
     },
@@ -26,7 +28,7 @@ export function getAgentNavSections(activeHref: string): PortalNavSection[] {
       label: "Quick Actions",
       items: [
         {
-          href: "/agent/case-registration",
+          href: ROUTES.agent.caseRegistration,
           label: "Case Registration",
           icon: (
             <svg
@@ -40,10 +42,10 @@ export function getAgentNavSections(activeHref: string): PortalNavSection[] {
               <path d="M19 8v6M22 11h-6" />
             </svg>
           ),
-          active: activeHref === "/agent/case-registration",
+          active: activeHref === ROUTES.agent.caseRegistration,
         },
         {
-          href: "/agent/referral-invoice",
+          href: ROUTES.agent.referralInvoice,
           label: "Referral & Invoice",
           icon: (
             <svg
@@ -56,10 +58,10 @@ export function getAgentNavSections(activeHref: string): PortalNavSection[] {
               <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
             </svg>
           ),
-          active: activeHref === "/agent/referral-invoice",
+          active: activeHref === ROUTES.agent.referralInvoice,
         },
         {
-          href: "/agent/case-status",
+          href: ROUTES.agent.caseStatus,
           label: "Case Status",
           icon: (
             <svg
@@ -72,10 +74,10 @@ export function getAgentNavSections(activeHref: string): PortalNavSection[] {
               <path d="M8 21h8M12 17v4" />
             </svg>
           ),
-          active: activeHref === "/agent/case-status",
+          active: activeHref === ROUTES.agent.caseStatus,
         },
         {
-          href: "/agent/action-required",
+          href: ROUTES.agent.actionRequired,
           label: "Action Required",
           icon: (
             <svg
@@ -88,7 +90,7 @@ export function getAgentNavSections(activeHref: string): PortalNavSection[] {
               <path d="M12 8v4M12 16h.01" />
             </svg>
           ),
-          active: activeHref === "/agent/action-required",
+          active: activeHref === ROUTES.agent.actionRequired,
         },
       ],
     },
@@ -101,10 +103,10 @@ export function getPatientNavSections(activeHref: string): PortalNavSection[] {
       label: "Overview",
       items: [
         {
-          href: "/patient/dashboard",
+          href: ROUTES.patient.dashboard,
           label: "Dashboard",
           icon: dashboardIcon,
-          active: activeHref === "/patient/dashboard",
+          active: activeHref === ROUTES.patient.dashboard,
         },
       ],
     },
@@ -112,7 +114,7 @@ export function getPatientNavSections(activeHref: string): PortalNavSection[] {
       label: "Our Services",
       items: [
         {
-          href: "/patient/overseas-treatment",
+          href: ROUTES.patient.overseasTreatment,
           label: "Overseas Treatment",
           icon: (
             <svg
@@ -125,10 +127,10 @@ export function getPatientNavSections(activeHref: string): PortalNavSection[] {
               <path d="M3 12h18M12 3c2.5 2.5 4 6 4 9s-1.5 6.5-4 9c-2.5-2.5-4-6-4-9s1.5-6.5 4-9z" />
             </svg>
           ),
-          active: activeHref === "/patient/overseas-treatment",
+          active: activeHref === ROUTES.patient.overseasTreatment,
         },
         {
-          href: "/patient/consult-expert",
+          href: ROUTES.patient.consultExpert,
           label: "Consult an Expert",
           icon: (
             <svg
@@ -143,10 +145,10 @@ export function getPatientNavSections(activeHref: string): PortalNavSection[] {
               <path d="M15 12h4" />
             </svg>
           ),
-          active: activeHref === "/patient/consult-expert",
+          active: activeHref === ROUTES.patient.consultExpert,
         },
         {
-          href: "/patient/second-opinion",
+          href: ROUTES.patient.secondOpinion,
           label: "Second Opinion",
           icon: (
             <svg
@@ -159,10 +161,10 @@ export function getPatientNavSections(activeHref: string): PortalNavSection[] {
               <path d="M9 12l2 2 4-4" />
             </svg>
           ),
-          active: activeHref === "/patient/second-opinion",
+          active: activeHref === ROUTES.patient.secondOpinion,
         },
         {
-          href: "/patient/education-prevention",
+          href: ROUTES.patient.educationPrevention,
           label: "Education Prevention",
           icon: (
             <svg
@@ -175,10 +177,10 @@ export function getPatientNavSections(activeHref: string): PortalNavSection[] {
               <path d="M6 10v5c0 1.5 3 3 6 3s6-1.5 6-3v-5" />
             </svg>
           ),
-          active: activeHref === "/patient/education-prevention",
+          active: activeHref === ROUTES.patient.educationPrevention,
         },
         {
-          href: "/patient/contact-us",
+          href: ROUTES.patient.contactUs,
           label: "Contact Us",
           icon: (
             <svg
@@ -191,7 +193,7 @@ export function getPatientNavSections(activeHref: string): PortalNavSection[] {
               <path d="M8 9h8M8 12h5" />
             </svg>
           ),
-          active: activeHref === "/patient/contact-us",
+          active: activeHref === ROUTES.patient.contactUs,
         },
       ],
     },

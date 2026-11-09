@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { AccountRole } from "@/config/auth";
 
 import { dashboardPathForRole, isAgentRole } from "@/config/auth";
+import { ROUTES } from "@/config/routes";
 import { useCareaiSession } from "@/hooks/use-careai-session";
 import { readCareaiSession } from "@/lib/careai/session";
 
@@ -25,8 +26,8 @@ export function useRequireCareaiSession(portal: PortalKind): void {
     // SSR/hydration null snapshot before useSyncExternalStore catches up.
     const activeSession = readCareaiSession();
     if (activeSession === null) {
-      if (pathname !== "/login") {
-        router.replace("/login");
+      if (pathname !== ROUTES.login) {
+        router.replace(ROUTES.login);
       }
       return;
     }

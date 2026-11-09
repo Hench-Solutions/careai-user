@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { PatientDateBadge } from "@/components/portal/patient-date-badge";
 import { careaiMockMember } from "@/config/careai-mock";
+import { ROUTES } from "@/config/routes";
 
 export function PatientDashboardContent() {
   return (
@@ -107,7 +108,10 @@ export function PatientDashboardContent() {
             </div>
           </div>
           <div className="lm-qa-grid">
-            <Link href="/patient/overseas-treatment" className="lm-qa-card">
+            <Link
+              href={ROUTES.patient.overseasTreatment}
+              className="lm-qa-card"
+            >
               <div className="lm-svc-icon s1">
                 <svg fill="none" viewBox="0 0 24 24">
                   <circle
@@ -131,7 +135,7 @@ export function PatientDashboardContent() {
               </div>
               <div className="lm-qa-text">Overseas Treatment</div>
             </Link>
-            <Link href="/patient/consult-expert" className="lm-qa-card">
+            <Link href={ROUTES.patient.consultExpert} className="lm-qa-card">
               <div className="lm-svc-icon s2">
                 <svg fill="none" viewBox="0 0 24 24">
                   <circle
@@ -164,7 +168,7 @@ export function PatientDashboardContent() {
               </div>
               <div className="lm-qa-text">Consult an Expert</div>
             </Link>
-            <Link href="/patient/second-opinion" className="lm-qa-card">
+            <Link href={ROUTES.patient.secondOpinion} className="lm-qa-card">
               <div className="lm-svc-icon s3">
                 <svg fill="none" viewBox="0 0 24 24">
                   <path
@@ -185,7 +189,10 @@ export function PatientDashboardContent() {
               </div>
               <div className="lm-qa-text">Second Opinion</div>
             </Link>
-            <Link href="/patient/education-prevention" className="lm-qa-card">
+            <Link
+              href={ROUTES.patient.educationPrevention}
+              className="lm-qa-card"
+            >
               <div className="lm-svc-icon s4">
                 <svg fill="none" viewBox="0 0 24 24">
                   <path
@@ -203,7 +210,7 @@ export function PatientDashboardContent() {
               </div>
               <div className="lm-qa-text">Education Prevention</div>
             </Link>
-            <Link href="/patient/contact-us" className="lm-qa-card">
+            <Link href={ROUTES.patient.contactUs} className="lm-qa-card">
               <div className="lm-svc-icon s5">
                 <svg fill="none" viewBox="0 0 24 24">
                   <path

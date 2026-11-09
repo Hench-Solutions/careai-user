@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { ROUTES } from "@/config/routes";
 import { siteConfig } from "@/config/site";
 
 /** Public entry points only — portal routes are authenticated and omitted. */
@@ -13,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: `${siteConfig.url}/login`,
+      url: `${siteConfig.url}${ROUTES.login}`,
       lastModified,
       changeFrequency: "monthly",
       priority: 0.9,

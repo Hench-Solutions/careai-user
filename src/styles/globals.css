@@ -14,7 +14,11 @@
   }
 
   ::selection {
-    background-color: color-mix(in oklab, var(--color-care-purple) 35%, transparent);
+    background-color: color-mix(
+      in oklab,
+      var(--color-care-purple) 35%,
+      transparent
+    );
     color: var(--color-care-ink);
   }
 

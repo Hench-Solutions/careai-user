@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 import "@/styles/globals.css";
 
+import { ROUTES } from "@/config/routes";
 import { noIndexRobots, siteConfig } from "@/config/site";
 import { inter } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
@@ -78,7 +79,7 @@ export const metadata: Metadata = {
   applicationName: siteConfig.shortName,
   referrer: "origin-when-cross-origin",
   alternates: {
-    canonical: "/",
+    canonical: ROUTES.home,
   },
   robots: noIndexRobots,
   openGraph: {

@@ -1,14 +1,8 @@
-"use client";
-
-import {
-  careaiOptionsFromLabels,
-  CareaiSelect,
-} from "@/components/careai/careai-select";
-import { usePgFormSubmit } from "@/components/portal/use-pg-form";
-import { cn } from "@/lib/utils";
+import { CareaiSelect } from "@/components/careai/careai-select";
+import { careaiOptionsFromLabels } from "@/components/careai/select-options";
+import { PgForm } from "@/components/portal/patient-pages/pg-form";
 
 export function PatientContactUsContent() {
-  const { submitted, onSubmit } = usePgFormSubmit();
   return (
     <>
       <div className="pg-hero">
@@ -113,10 +107,9 @@ export function PatientContactUsContent() {
               Send Us a Message
             </div>
           </div>
-          <form
-            className="pg-form"
-            onSubmit={onSubmit}
-            style={submitted ? { display: "none" } : undefined}
+          <PgForm
+            successTitle="Message Sent"
+            successMessage="Thank you — our support team will get back to you within one business day."
           >
             <div className="pg-field">
               <label>Full Name</label>
@@ -152,24 +145,7 @@ export function PatientContactUsContent() {
                 Submit Message
               </button>
             </div>
-          </form>
-          <div className={cn("pg-success", submitted && "show")}>
-            <div className="pg-success-icon">
-              <svg
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M20 6L9 17l-5-5" />
-              </svg>
-            </div>
-            <h3>Message Sent</h3>
-            <p>
-              Thank you — our support team will get back to you within one
-              business day.
-            </p>
-          </div>
+          </PgForm>
         </div>
 
         <div className="pg-section" style={{ marginBottom: "0" }}>

@@ -1,16 +1,10 @@
-"use client";
-
 import Image from "next/image";
 
-import {
-  careaiOptionsFromLabels,
-  CareaiSelect,
-} from "@/components/careai/careai-select";
-import { usePgFormSubmit } from "@/components/portal/use-pg-form";
-import { cn } from "@/lib/utils";
+import { CareaiSelect } from "@/components/careai/careai-select";
+import { careaiOptionsFromLabels } from "@/components/careai/select-options";
+import { PgForm } from "@/components/portal/patient-pages/pg-form";
 
 export function PatientEducationPreventionContent() {
-  const { submitted, onSubmit } = usePgFormSubmit();
   return (
     <>
       <div className="pg-hero">
@@ -218,10 +212,9 @@ export function PatientEducationPreventionContent() {
           </div>
         </div>
 
-        <form
-          className="pg-form"
-          onSubmit={onSubmit}
-          style={submitted ? { display: "none" } : undefined}
+        <PgForm
+          successTitle="Question Submitted"
+          successMessage="Thank you — one of our reviewing physicians will get back to you by email, usually within 2 business days."
         >
           <div className="pg-field">
             <label>
@@ -298,25 +291,7 @@ export function PatientEducationPreventionContent() {
               business days.
             </div>
           </div>
-        </form>
-
-        <div className={cn("pg-success", submitted && "show")}>
-          <div className="pg-success-icon">
-            <svg
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-          </div>
-          <h3>Question Submitted</h3>
-          <p>
-            Thank you — one of our reviewing physicians will get back to you by
-            email, usually within 2 business days.
-          </p>
-        </div>
+        </PgForm>
       </div>
     </>
   );

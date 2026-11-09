@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import "@/styles/careai-portal.css";
 
-import { AgentPortalShell } from "@/components/portal/agent-portal-shell";
+import { PortalShell } from "@/components/portal/portal-shell";
 import { noIndexRobots } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -15,5 +15,5 @@ export default function AgentPortalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AgentPortalShell>{children}</AgentPortalShell>;
+  return <PortalShell portal="agent">{children}</PortalShell>;
 }

@@ -18,7 +18,7 @@ export type PortalNavSection = {
   items: PortalNavItem[];
 };
 
-/** Intrinsic size of `public/images/care-ai-logo.png` (matches HTML CareAILogo.png). */
+/** Intrinsic size of `public/images/care-ai-logo.png`. */
 const CARE_AI_LOGO_WIDTH = 1024;
 const CARE_AI_LOGO_HEIGHT = 304;
 

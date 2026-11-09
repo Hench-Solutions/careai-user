@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LoginForm } from "@/components/auth/login-form";
+import { ROUTES } from "@/config/routes";
 import { noIndexRobots, siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   description:
     "Sign in to CareAI as a patient or agent. Patients can register; agent accounts are provisioned by your organization.",
   alternates: {
-    canonical: "/login",
+    canonical: ROUTES.login,
   },
   robots: noIndexRobots,
   openGraph: {
