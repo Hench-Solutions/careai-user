@@ -1,13 +1,13 @@
 "use client";
 
 import { memo } from "react";
-import { useRouter } from "next/navigation";
 
 import { LogOut } from "lucide-react";
 
 import { ROUTES } from "@/config/routes";
 import { useCareaiSession } from "@/hooks/use-careai-session";
 import { clearCareaiSession, sessionInitials } from "@/lib/careai/session";
+import { logout } from "@/services/auth";
 
 type PortalSidebarFootProps = {
   fallback: {
@@ -20,16 +20,18 @@ type PortalSidebarFootProps = {
 export const PortalSidebarFoot = memo(function PortalSidebarFoot({
   fallback,
 }: PortalSidebarFootProps) {
-  const router = useRouter();
   const session = useCareaiSession();
 
   const initials = session ? sessionInitials(session) : fallback.initials;
   const name = session?.name ?? fallback.name;
   const role = fallback.role;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Clear the httpOnly cookie first; the proxy decides access from it, not from local storage.
+    await logout().catch(() => undefined);
     clearCareaiSession();
-    router.replace(ROUTES.login);
+    // Full navigation, not router.replace: it also drops the client-side page cache.
+    window.location.replace(ROUTES.login);
   };
 
   return (

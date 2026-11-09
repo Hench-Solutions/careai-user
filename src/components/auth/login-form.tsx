@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -33,9 +33,8 @@ import {
   MIN_PASSWORD_LENGTH,
 } from "@/config/auth-messages";
 import { ROUTES } from "@/config/routes";
-import { useCareaiSession } from "@/hooks/use-careai-session";
 import { careaiLogin } from "@/lib/careai/classes";
-import { readCareaiSession, writeCareaiSession } from "@/lib/careai/session";
+import { writeCareaiSession } from "@/lib/careai/session";
 import { cn } from "@/lib/utils";
 import { patientSignup, portalLogin } from "@/services/auth";
 
@@ -46,7 +45,6 @@ const roleIcons: Record<AccountRole, typeof UserRound> = {
 
 export function LoginForm() {
   const router = useRouter();
-  const session = useCareaiSession();
   const [tab, setTab] = useState<AuthTab>("signin");
   const [selectedRole, setSelectedRole] = useState<AccountRole>("patient");
   const [showPassword, setShowPassword] = useState(false);
@@ -59,13 +57,6 @@ export function LoginForm() {
     text: string;
     type: "error" | "success";
   } | null>(null);
-
-  useEffect(() => {
-    const activeSession = readCareaiSession();
-    if (activeSession) {
-      router.replace(dashboardPathForRole(activeSession.role));
-    }
-  }, [router, session]);
 
   const switchTab = useCallback((next: AuthTab) => {
     setTab(next);

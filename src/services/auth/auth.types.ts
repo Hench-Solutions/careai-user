@@ -1,10 +1,4 @@
-/** Wire values of the API's `User_Type`. */
-export const API_USER_TYPES = {
-  patient: "PATIENT",
-  agent: "AGENT",
-} as const;
-
-export type ApiUserType = (typeof API_USER_TYPES)[keyof typeof API_USER_TYPES];
+import type { ApiUserType } from "@/config/auth";
 
 export type PortalLoginPayload = {
   User_Type: ApiUserType;
@@ -18,7 +12,7 @@ export type PatientSignupPayload = {
   Password: string;
 };
 
-/** Shared by sign-in and sign-up; `user_Cd` is Agent_Cd / Member_Id. */
+/** Shared by sign-in and sign-up; `user_Cd` is Agent_Cd / Member_Id. The token never reaches the browser. */
 export type PortalUser = {
   user_Type: ApiUserType;
   user_Cd: string;

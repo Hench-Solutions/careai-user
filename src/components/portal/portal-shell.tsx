@@ -8,7 +8,6 @@ import {
   getAgentNavSections,
   getPatientNavSections,
 } from "@/config/portal-navigation";
-import { useRequireCareaiSession } from "@/hooks/use-require-careai-session";
 import { careaiPortal } from "@/lib/careai/classes";
 import { urbanist } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
@@ -40,7 +39,6 @@ export function PortalShell({
 }) {
   const pathname = usePathname();
   const { getSections, footer } = PORTALS[portal];
-  useRequireCareaiSession(portal);
 
   return (
     <div

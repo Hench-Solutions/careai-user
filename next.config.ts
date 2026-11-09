@@ -1,14 +1,10 @@
 import type { NextConfig } from "next";
 
-import { API_BASE_URL } from "./src/config/env";
-
 const isProd = process.env.NODE_ENV === "production";
 const imageHostnames = (process.env.NEXT_PUBLIC_IMAGE_HOSTS ?? "")
   .split(",")
   .map((host) => host.trim())
   .filter(Boolean);
-
-const apiOrigin = new URL(API_BASE_URL).origin;
 
 /** Content Security Policy for the CareAI user web app. */
 const contentSecurityPolicy = [
@@ -18,7 +14,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https: ${apiOrigin}`,
+  "connect-src 'self' https:",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -78,6 +74,11 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      // Signed-in pages must not be restored from a cache after logout (Back button).
+      {
+        source: "/:portal(agent|patient)/:path*",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
       },
     ];
   },

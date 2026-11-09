@@ -6,16 +6,10 @@ import type {
 
 import type { AccountRole } from "@/config/auth";
 
-import { API_ENDPOINTS } from "@/config/api";
+import { BFF_ENDPOINTS } from "@/config/api";
+import { apiUserTypeForRole } from "@/config/auth";
 import { AUTH_MESSAGES } from "@/config/auth-messages";
 import { apiPost } from "@/lib/api/client";
-
-import { API_USER_TYPES } from "./auth.types";
-
-const userTypeForRole: Record<AccountRole, PortalLoginPayload["User_Type"]> = {
-  patient: API_USER_TYPES.patient,
-  facilitator: API_USER_TYPES.agent,
-};
 
 export function portalLogin(
   role: AccountRole,
@@ -23,11 +17,11 @@ export function portalLogin(
   password: string,
 ): Promise<PortalUser> {
   const payload: PortalLoginPayload = {
-    User_Type: userTypeForRole[role],
+    User_Type: apiUserTypeForRole[role],
     Login_Id: loginId,
     Password: password,
   };
-  return apiPost<PortalUser>(API_ENDPOINTS.auth.portalLogin, payload, {
+  return apiPost<PortalUser>(BFF_ENDPOINTS.auth.login, payload, {
     failMessage: AUTH_MESSAGES.signInFailed,
   });
 }
@@ -43,7 +37,11 @@ export function patientSignup(
     Email_Id: email,
     Password: password,
   };
-  return apiPost<PortalUser>(API_ENDPOINTS.auth.patientSignup, payload, {
+  return apiPost<PortalUser>(BFF_ENDPOINTS.auth.signup, payload, {
     failMessage: AUTH_MESSAGES.signUpFailed,
   });
+}
+
+export function logout(): Promise<{ loggedOut: boolean }> {
+  return apiPost(BFF_ENDPOINTS.auth.logout, {});
 }

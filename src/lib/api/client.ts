@@ -1,7 +1,6 @@
 import { API_MESSAGES } from "@/config/api";
-import { API_BASE_URL } from "@/config/env";
 
-type ApiEnvelope<T> = {
+export type ApiEnvelope<T> = {
   errorObj?: { errorCode: number; errorMessage: string }[];
   responseObj?: T | null;
   /** ASP.NET model-validation (ProblemDetails) shape. */
@@ -19,23 +18,34 @@ export class ApiError extends Error {
   }
 }
 
-type RequestOptions = {
+/** Only 4xx messages reach the user; 5xx text can be raw server/SQL errors. */
+export function userMessageFrom(
+  status: number,
+  body: ApiEnvelope<unknown> | null,
+  fallback: string,
+): string {
+  if (status >= 500) return fallback;
+  return (
+    body?.errorObj?.[0]?.errorMessage ??
+    Object.values(body?.errors ?? {})[0]?.[0] ??
+    fallback
+  );
+}
+
+type PostOptions = {
   /** Shown when the server gives no user-safe message. */
   failMessage?: string;
 };
 
-/**
- * POST JSON to the CareAI API and return the envelope's `responseObj`.
- * Only 4xx messages reach the user; 5xx text can be raw server/SQL errors.
- */
+/** POST JSON to `url` and return the envelope's `responseObj`. */
 export async function apiPost<TResponse>(
-  path: string,
+  url: string,
   payload: object,
-  { failMessage = API_MESSAGES.generic }: RequestOptions = {},
+  { failMessage = API_MESSAGES.generic }: PostOptions = {},
 ): Promise<TResponse> {
   let res: Response;
   try {
-    res = await fetch(`${API_BASE_URL}${path}`, {
+    res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -48,12 +58,10 @@ export async function apiPost<TResponse>(
     .json()
     .catch(() => null)) as ApiEnvelope<TResponse> | null;
   if (!res.ok || !body?.responseObj) {
-    const message =
-      res.status < 500 ?
-        (body?.errorObj?.[0]?.errorMessage ??
-        Object.values(body?.errors ?? {})[0]?.[0])
-      : undefined;
-    throw new ApiError(message ?? failMessage, res.status);
+    throw new ApiError(
+      userMessageFrom(res.status, body, failMessage),
+      res.status,
+    );
   }
   return body.responseObj;
 }
