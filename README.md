@@ -1,3 +1,5 @@
+<img src="public/images/care-ai-logo.png" alt="CareAI" width="220" />
+
 # CareAI User Web
 
 Next.js (App Router) front end for CareAI: a patient portal and an agent portal, backed by the CareAi .NET API.
