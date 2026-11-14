@@ -1,10 +1,19 @@
-/** API versioned prefix and per-feature endpoint paths (relative to the API base URL; server-side only). */
-const API_VERSION_PREFIX = "/v1";
-
+/**
+ * Upstream CareAi.Core.Api paths (relative to CAREAI_API_URL; server-side only).
+ * BaseController routes as `[controller]` — no `/v1` prefix.
+ */
 export const API_ENDPOINTS = {
   auth: {
-    portalLogin: `${API_VERSION_PREFIX}/Auth/portal-login`,
-    patientSignup: `${API_VERSION_PREFIX}/Auth/patient-signup`,
+    portalLogin: "/Auth/portal-login",
+    patientSignup: "/Auth/patient-signup",
+  },
+  lead: {
+    portalRegister: "/PortalLead/register",
+    portalUploadDocuments: "/PortalLead/upload-documents",
+  },
+  master: {
+    items: "/Master/items",
+    portalDropdown: "/PortalMaster/dropdown",
   },
 } as const;
 
@@ -15,10 +24,19 @@ export const BFF_ENDPOINTS = {
     signup: "/api/auth/signup",
     logout: "/api/auth/logout",
   },
+  lead: {
+    register: "/api/lead/register",
+    uploadDocuments: "/api/lead/upload-documents",
+  },
+  master: {
+    dropdown: "/api/master/dropdown",
+  },
 } as const;
 
-/** Auth requests are tiny; anything larger is rejected before it is parsed. */
+/** Auth JSON body cap. */
 export const BFF_MAX_BODY_BYTES = 10_000;
+/** Lead registration JSON body cap (no file bodies). */
+export const BFF_LEAD_MAX_BODY_BYTES = 50_000;
 
 /** Messages shown when the server gave no user-safe text. */
 export const API_MESSAGES = {
