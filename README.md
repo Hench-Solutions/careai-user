@@ -1,50 +1,65 @@
 # CareAI User Web
 
-Next.js App Router front end for **CareAI** — patient and agent portals for healthcare journeys (second opinions, expert consults, overseas treatment, and case management).
+Next.js (App Router) front end for CareAI: a patient portal and an agent portal, backed by the CareAi .NET API.
 
-## Quick start
+## Run locally
+
+Requires Node.js ≥ 20.20.2 and [bun](https://bun.sh/).
 
 ```bash
 bun install
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) (redirects to sign-in).
+Open [http://localhost:3000](http://localhost:3000); it redirects to sign-in. The API must be reachable at `CAREAI_API_URL`.
 
-| Step | Command | What it does |
-| ---- | ------- | ------------ |
-| 01 | `bun install` | Dependencies + Husky hooks |
-| 02 | `bun dev` | Turbopack dev server |
-| 03 | `bun run validate` | Lint, types, Prettier, production build |
+| Script             | What it does                               |
+| ------------------ | ------------------------------------------ |
+| `bun dev`          | Dev server (Turbopack)                     |
+| `bun run build`    | Production build                           |
+| `bun run start`    | Serve the production build                 |
+| `bun run validate` | Lint, type check, format check, then build |
+| `bun run fmt`      | Format with Prettier                       |
 
-Node.js ≥ 20.20.2. Uses [bun](https://bun.sh/) by default.
+## Environment
 
-## Configuration
+`.env` holds LOCAL, UAT and PROD blocks with the same keys. Leave one block uncommented. `.env.example` lists the keys.
 
-- **`src/config/site.ts`** — app name, description, SEO defaults, canonical base URL
-- **`NEXT_PUBLIC_SITE_URL`** — production site URL (no trailing slash); see `.env.example`
-- **`NEXT_PUBLIC_IMAGE_HOSTS`** — optional comma-separated hostnames for `next/image`
+| Key                       | Purpose                                                                                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL`    | Public address of this app, no trailing slash. Used for sitemap, `robots.txt` and social previews.                                           |
+| `NEXT_PUBLIC_IMAGE_HOSTS` | Optional, comma-separated hostnames `next/image` may load from.                                                                              |
+| `CAREAI_API_URL`          | Address of the CareAi API. Server-side only. Required in production.                                                                         |
+| `TRUST_FORWARDED_FOR`     | Set `true` only behind a trusted proxy that adds the visitor's IP to `X-Forwarded-For`. Otherwise all visitors share one sign-in rate limit. |
 
-## Scripts
+`NEXT_PUBLIC_*` values are fixed at build time: rebuild after changing them.
 
-| Script | Description |
-| ------ | ----------- |
-| `dev` | Dev server (Turbopack) |
-| `build` | Production build |
-| `start` | Serve production build |
-| `validate` | Lint + format check + build |
-| `fmt` | Prettier write |
+## How it works
+
+- **Sign-in.** Agents sign in with their Agent ID and patients with their Member ID. Sign-in is a Server Action that stores the API's token in an httpOnly cookie; the browser never sees the token.
+- **No signing key here.** The API issues and validates the token on every call. `src/proxy.ts` only redirects visitors without a cookie to `/login`. The portal layout asks the API who the user is (`src/server/session.ts`) and shows a portal only to its own user type.
+- **API access.** The browser calls this app's own routes (`src/app/api/*`), which forward to the API with the cookie as a Bearer token. Paths, query names, limits and messages live in `src/config`.
+- **Sessions** last 60 minutes and are not refreshed; an expired session goes back to the login page.
+
+## Deploying
+
+- Serve over HTTPS: the cookie is `Secure` in production.
+- Set `CAREAI_API_URL` and `NEXT_PUBLIC_SITE_URL`, then build.
+- More than one instance: set the same `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` on all of them.
+- Behind a proxy that rewrites the `Host` header: list the public host in `serverActions.allowedOrigins` (`next.config.ts`), or sign-in is rejected.
 
 ## Structure
 
 ```
 src/
-├── app/                 # Routes, layouts, robots, sitemap
-├── components/          # Auth and portal UI
-├── config/              # site, auth, navigation, mock data
-├── hooks/               # Session helpers
-├── lib/careai/          # Session storage
-└── styles/              # CareAI theme and portal CSS
+├── app/         Routes, API route handlers (api/), robots, sitemap
+├── components/  Auth, portal and shared UI
+├── config/      Routes, API endpoints and messages, auth and lead constants, site metadata, demo data
+├── lib/         API client, auth helpers, utilities
+├── server/      Server-only code: API calls, session, sign-in and sign-out actions
+├── services/    Browser-side calls to this app's own routes
+├── styles/      Theme, login and portal CSS
+└── proxy.ts     Sends signed-out visitors to /login
 ```
 
 ## License

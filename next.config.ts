@@ -52,6 +52,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,
   // Always-on React Compiler; Rust path via Turbopack when available.

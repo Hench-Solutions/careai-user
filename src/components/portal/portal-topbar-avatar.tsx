@@ -1,22 +1,14 @@
-"use client";
-
-import { memo } from "react";
-
-import { careaiMockMember } from "@/config/careai-mock";
-import { useCareaiSession } from "@/hooks/use-careai-session";
-import { sessionInitials } from "@/lib/careai/session";
+import { UserField } from "@/components/portal/portal-user-field";
 import { cn } from "@/lib/utils";
 
 type PortalTopbarAvatarProps = {
   className?: string;
 };
 
-export const PortalTopbarAvatar = memo(function PortalTopbarAvatar({
-  className,
-}: PortalTopbarAvatarProps) {
-  const session = useCareaiSession();
-  const initials =
-    session ? sessionInitials(session) : careaiMockMember.initials;
-
-  return <div className={cn("lm-avatar", className)}>{initials}</div>;
-});
+export function PortalTopbarAvatar({ className }: PortalTopbarAvatarProps) {
+  return (
+    <div className={cn("lm-avatar", className)}>
+      <UserField field="initials" />
+    </div>
+  );
+}

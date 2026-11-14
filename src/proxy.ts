@@ -2,34 +2,43 @@ import { NextResponse } from "next/server";
 
 import type { NextRequest } from "next/server";
 
-import { dashboardPathForRole } from "@/config/auth";
+import {
+  dashboardPathForRole,
+  LOGIN_PARAMS,
+  LOGIN_REASONS,
+  portalBaseForRole,
+} from "@/config/auth";
 import { PORTAL_TOKEN_COOKIE } from "@/config/portal-session";
 import { ROUTES } from "@/config/routes";
-import { PORTAL_JWT_SECRET } from "@/config/server-env";
-import { verifyPortalToken } from "@/lib/auth/portal-token";
+import { readPortalToken } from "@/lib/auth/portal-token";
 
 /**
- * Cookie gate for the portals: only a valid, unexpired portal token opens /agent and /patient,
- * and each portal only opens for its own user type. The API re-checks the token on every call.
+ * Routing gate for the portals: an unexpired portal cookie opens /agent or /patient, each only for
+ * its own user type. This is not security: the token is not verified here, the API validates it
+ * on every call, so a forged cookie shows an empty page shell and nothing else.
  */
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const claims = await verifyPortalToken(
-    request.cookies.get(PORTAL_TOKEN_COOKIE)?.value,
-    PORTAL_JWT_SECRET,
-  );
-  const redirectTo = (path: string) =>
-    NextResponse.redirect(new URL(path, request.url));
+export function proxy(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+  const cookie = request.cookies.get(PORTAL_TOKEN_COOKIE)?.value;
+  const claims = readPortalToken(cookie);
+  const redirectTo = (url: string | URL) =>
+    NextResponse.redirect(new URL(url, request.url));
 
   if (pathname === ROUTES.login) {
     return claims ?
         redirectTo(dashboardPathForRole(claims.role))
       : NextResponse.next();
   }
-  if (!claims) return redirectTo(ROUTES.login);
 
-  const ownBase =
-    claims.role === "patient" ? ROUTES.patient.base : ROUTES.agent.base;
+  if (!claims) {
+    const login = new URL(ROUTES.login, request.url);
+    login.searchParams.set(LOGIN_PARAMS.next, pathname + search);
+    if (cookie)
+      login.searchParams.set(LOGIN_PARAMS.reason, LOGIN_REASONS.expired);
+    return redirectTo(login);
+  }
+
+  const ownBase = portalBaseForRole(claims.role);
   return pathname === ownBase || pathname.startsWith(`${ownBase}/`) ?
       NextResponse.next()
     : redirectTo(dashboardPathForRole(claims.role));

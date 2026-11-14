@@ -25,17 +25,14 @@ const CARE_AI_LOGO_HEIGHT = 304;
 type PortalSidebarProps = {
   sections: PortalNavSection[];
   logoVariant: "agent" | "patient";
-  footer: {
-    initials: string;
-    name?: string;
-    role: string;
-  };
+  /** Role line under the signed-in user's name. */
+  footerRole: string;
 };
 
 export function PortalSidebar({
   sections,
   logoVariant,
-  footer,
+  footerRole,
 }: PortalSidebarProps) {
   return (
     <aside className="lm-sidebar">
@@ -47,6 +44,7 @@ export function PortalSidebar({
               alt="CareAI Logo"
               width={CARE_AI_LOGO_WIDTH}
               height={CARE_AI_LOGO_HEIGHT}
+              sizes="270px"
               priority
             />
           </div>
@@ -57,6 +55,7 @@ export function PortalSidebar({
             alt="CareAI Logo"
             width={CARE_AI_LOGO_WIDTH}
             height={CARE_AI_LOGO_HEIGHT}
+            sizes="160px"
             priority
             className="lm-logo-img"
           />
@@ -81,7 +80,7 @@ export function PortalSidebar({
         ))}
       </nav>
 
-      <PortalSidebarFoot fallback={footer} />
+      <PortalSidebarFoot role={footerRole} />
     </aside>
   );
 }

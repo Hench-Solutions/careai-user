@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { PatientDateBadge } from "@/components/portal/patient-date-badge";
+import { UserField } from "@/components/portal/portal-user-field";
 import { careaiMockMember } from "@/config/careai-mock";
 import { ROUTES } from "@/config/routes";
 
@@ -16,7 +17,13 @@ export function PatientDashboardContent() {
             Hello, Welcome Back
           </div>
           <h1 className="lm-h1">
-            Good Morning, <span>{careaiMockMember.displayName}</span>
+            Good Morning,{" "}
+            <span>
+              <UserField
+                field="firstName"
+                fallback={careaiMockMember.displayName}
+              />
+            </span>
           </h1>
         </div>
         <PatientDateBadge />

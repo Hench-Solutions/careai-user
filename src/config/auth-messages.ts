@@ -15,6 +15,7 @@ export const AUTH_MESSAGES = {
   emailRequired: "Please enter your email address.",
   signInFailed: "Sign in failed. Please try again.",
   signUpFailed: "Sign up failed. Please try again.",
+  sessionExpired: "Your session has expired. Please sign in again.",
   creatingAccount: "Creating your patient account…",
   signingIn: (roleLabel: string) => `Signing in as ${roleLabel}…`,
   loginIdRequired: (idLabel: string) => `Please enter your ${idLabel}.`,

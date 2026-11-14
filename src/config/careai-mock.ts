@@ -5,18 +5,11 @@
 export const careaiMockMember = {
   displayName: "Member",
   accountLabel: "Prospera Global",
-  initials: "BA",
-  businessAccountName: "Business Account",
 } as const;
 
 export const careaiMockAgent = {
-  initials: "BA",
-  accountName: "Business Account",
   organization: "Prospera Global",
 } as const;
-
-/** Pre-filled member ID on case registration step 1 (new case, not in active roster). */
-export const careaiMockCaseRegistrationMemberId = "MEM261305002";
 
 export type AgentCaseBadge = "Treatment Ongoing" | "Under Review";
 

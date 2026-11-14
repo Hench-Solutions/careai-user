@@ -2,85 +2,71 @@ import type {
   LeadRegistrationPayload,
   LeadRegistrationResult,
   LeadUploadDocumentsResult,
+  MasterOption,
 } from "./lead.types";
 
-import { BFF_ENDPOINTS } from "@/config/api";
-import { apiPost } from "@/lib/api/client";
+import { BFF_ENDPOINTS, MASTER_QUERY } from "@/config/api";
+import { LEAD_MESSAGES, LEAD_UPLOAD_FIELDS } from "@/config/lead";
+import { apiGet, apiPost, apiPostForm } from "@/lib/api/client";
 
 export function registerLead(
   payload: LeadRegistrationPayload,
 ): Promise<LeadRegistrationResult> {
   return apiPost<LeadRegistrationResult>(BFF_ENDPOINTS.lead.register, payload, {
-    failMessage: "Could not submit the case. Please try again.",
+    failMessage: LEAD_MESSAGES.submitFailed,
   });
 }
 
-export async function uploadLeadDocuments(input: {
+export function uploadLeadDocuments(input: {
   claimNo: string;
   memberId: string;
   idDocument?: File | null;
   medicalReports?: FileList | File[] | null;
 }): Promise<LeadUploadDocumentsResult> {
   const form = new FormData();
-  form.set("claimNo", input.claimNo);
-  form.set("memberId", input.memberId);
-  form.set("idDocCd", "303");
-  form.set("idDocNm", "ID Document");
-  form.set("medicalDocCd", "316");
-  form.set("medicalDocNm", "Medical Report");
-
+  form.set(LEAD_UPLOAD_FIELDS.claimNo, input.claimNo);
+  form.set(LEAD_UPLOAD_FIELDS.memberId, input.memberId);
   if (input.idDocument) {
-    form.set("idDocument", input.idDocument);
+    form.set(LEAD_UPLOAD_FIELDS.idDocument, input.idDocument);
   }
-  const reports = input.medicalReports;
-  if (reports) {
-    const list = Array.isArray(reports) ? reports : Array.from(reports);
-    for (const file of list) {
-      form.append("medicalReports", file);
-    }
+  for (const file of Array.from(input.medicalReports ?? [])) {
+    form.append(LEAD_UPLOAD_FIELDS.medicalReports, file);
   }
-
-  const res = await fetch(BFF_ENDPOINTS.lead.uploadDocuments, {
-    method: "POST",
-    body: form,
-    credentials: "same-origin",
-  });
-  const body = (await res.json().catch(() => null)) as {
-    responseObj?: LeadUploadDocumentsResult;
-    errorObj?: { errorMessage?: string }[];
-  } | null;
-  if (!res.ok) {
-    throw new Error(
-      body?.errorObj?.[0]?.errorMessage || "Could not upload documents.",
-    );
-  }
-  return body?.responseObj ?? {};
+  return apiPostForm<LeadUploadDocumentsResult>(
+    BFF_ENDPOINTS.lead.uploadDocuments,
+    form,
+    { failMessage: LEAD_MESSAGES.uploadFailed, allowEmpty: true },
+  );
 }
 
-export type MasterDropdownOption = { value: string; label: string };
+type MasterRow = { value: string; text: string };
 
-export async function fetchMasterDropdown(
+/** A master list as select options; an unavailable list is an empty one. */
+async function fetchOptions(
+  url: string,
+  params: Record<string, string>,
+): Promise<MasterOption[]> {
+  const query = new URLSearchParams(params);
+  try {
+    const rows = await apiGet<MasterRow[]>(`${url}?${query}`);
+    return rows.map((row) => ({ value: row.value, label: row.text }));
+  } catch {
+    return [];
+  }
+}
+
+export function fetchMasterDropdown(
   mode: string,
   filterId = "",
-): Promise<MasterDropdownOption[]> {
-  const qs = new URLSearchParams({ mode });
-  if (filterId) qs.set("filterId", filterId);
-  const res = await fetch(`${BFF_ENDPOINTS.master.dropdown}?${qs}`, {
-    method: "GET",
-    credentials: "same-origin",
-    cache: "no-store",
+): Promise<MasterOption[]> {
+  return fetchOptions(BFF_ENDPOINTS.master.dropdown, {
+    [MASTER_QUERY.mode]: mode,
+    ...(filterId && { [MASTER_QUERY.filterId]: filterId }),
   });
-  const body = (await res.json().catch(() => null)) as {
-    responseObj?: {
-      value?: string;
-      text?: string;
-      Value?: string;
-      Text?: string;
-    }[];
-  } | null;
-  if (!res.ok || !Array.isArray(body?.responseObj)) return [];
-  return body.responseObj.map((row) => ({
-    value: String(row.value ?? row.Value ?? ""),
-    label: String(row.text ?? row.Text ?? row.value ?? row.Value ?? ""),
-  }));
+}
+
+export function fetchMasterItems(itemType: string): Promise<MasterOption[]> {
+  return fetchOptions(BFF_ENDPOINTS.master.items, {
+    [MASTER_QUERY.itemType]: itemType,
+  });
 }

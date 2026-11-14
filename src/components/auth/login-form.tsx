@@ -1,8 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useActionState, useCallback, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import {
   ArrowLeft,
@@ -20,10 +19,12 @@ import {
 } from "lucide-react";
 
 import type { AccountRole, AuthTab } from "@/config/auth";
+import type { AuthFormState } from "@/server/auth-actions";
 
 import {
+  apiUserTypeForRole,
   canSelfRegister,
-  dashboardPathForRole,
+  LOGIN_PARAMS,
   roleLabels,
   signInRoles,
 } from "@/config/auth";
@@ -34,29 +35,57 @@ import {
 } from "@/config/auth-messages";
 import { ROUTES } from "@/config/routes";
 import { careaiLogin } from "@/lib/careai/classes";
-import { writeCareaiSession } from "@/lib/careai/session";
 import { cn } from "@/lib/utils";
-import { patientSignup, portalLogin } from "@/services/auth";
+import { signInAction, signUpAction } from "@/server/auth-actions";
 
 const roleIcons: Record<AccountRole, typeof UserRound> = {
   patient: UserRound,
   facilitator: Handshake,
 };
 
-export function LoginForm() {
-  const router = useRouter();
+type LoginFormProps = {
+  /** Path to open after sign-in (the page the visitor was sent away from). */
+  next?: string;
+  /** The visitor arrived because their session ended. */
+  expired?: boolean;
+};
+
+export function LoginForm({ next, expired = false }: LoginFormProps) {
   const [tab, setTab] = useState<AuthTab>("signin");
   const [selectedRole, setSelectedRole] = useState<AccountRole>("patient");
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loginId, setLoginId] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState<{
     text: string;
     type: "error" | "success";
-  } | null>(null);
+  } | null>(
+    expired ? { text: AUTH_MESSAGES.sessionExpired, type: "error" } : null,
+  );
+
+  const [signInState, signIn, signingIn] = useActionState(signInAction, null);
+  const [signUpState, signUp, signingUp] = useActionState(signUpAction, null);
+  const submitting = signingIn || signingUp;
+
+  // Show each action's result once, as it arrives; a new account moves on to sign-in.
+  const [shown, setShown] = useState<{
+    signIn: AuthFormState;
+    signUp: AuthFormState;
+  }>({ signIn: signInState, signUp: signUpState });
+  if (shown.signIn !== signInState || shown.signUp !== signUpState) {
+    const latest = shown.signIn !== signInState ? signInState : signUpState;
+    setShown({ signIn: signInState, signUp: signUpState });
+    if (latest) {
+      setMessage({ text: latest.message, type: latest.type });
+      if (latest.loginId) {
+        setTab("signin");
+        setLoginId(latest.loginId);
+        setPassword("");
+      }
+    }
+  }
 
   const switchTab = useCallback((next: AuthTab) => {
     setTab(next);
@@ -91,55 +120,19 @@ export function LoginForm() {
     return null;
   };
 
-  const signIn = async () => {
-    setMessage({
-      text: AUTH_MESSAGES.signingIn(roleLabels[selectedRole]),
-      type: "success",
-    });
-    try {
-      const user = await portalLogin(selectedRole, loginId.trim(), password);
-      writeCareaiSession({
-        role: selectedRole,
-        email: user.email_Id,
-        name: user.user_Full_Name,
-        userCd: user.user_Cd,
-      });
-      // Next keeps this page mounted after navigation; don't leave credentials for the next visit.
-      setLoginId("");
-      setPassword("");
-      setMessage(null);
-      router.push(dashboardPathForRole(selectedRole));
-    } catch (err) {
-      fail(err instanceof Error ? err.message : AUTH_MESSAGES.signInFailed);
-    }
-    setSubmitting(false);
-  };
-
-  const signUp = async () => {
-    setMessage({ text: AUTH_MESSAGES.creatingAccount, type: "success" });
-    try {
-      const user = await patientSignup(name.trim(), email.trim(), password);
-      setTab("signin");
-      setLoginId(user.user_Cd);
-      setPassword("");
-      setMessage({
-        text: AUTH_MESSAGES.accountCreated(user.user_Cd),
-        type: "success",
-      });
-    } catch (err) {
-      fail(err instanceof Error ? err.message : AUTH_MESSAGES.signUpFailed);
-    }
-    setSubmitting(false);
-  };
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (submitting) return;
+  const submit = (dispatch: (form: FormData) => void) => (form: FormData) => {
     const error = validate();
     if (error) return fail(error);
-    setSubmitting(true);
-    void (isSignIn ? signIn() : signUp());
+    setMessage(null);
+    dispatch(form);
   };
+
+  const pendingText =
+    signingIn ? AUTH_MESSAGES.signingIn(roleLabels[selectedRole])
+    : signingUp ? AUTH_MESSAGES.creatingAccount
+    : null;
+  const shownMessage =
+    pendingText ? { text: pendingText, type: "success" as const } : message;
 
   return (
     <div className={careaiLogin.root}>
@@ -236,7 +229,15 @@ export function LoginForm() {
 
         <div className="divider" />
 
-        <form onSubmit={handleSubmit} noValidate>
+        <form action={submit(isSignIn ? signIn : signUp)} noValidate>
+          <input
+            type="hidden"
+            name="user_type"
+            value={apiUserTypeForRole[selectedRole]}
+          />
+          {next ?
+            <input type="hidden" name={LOGIN_PARAMS.next} value={next} />
+          : null}
           {tab === "signup" ?
             <div className="field-group">
               <label className="field-label" htmlFor="name-input">
@@ -250,6 +251,7 @@ export function LoginForm() {
                   className="form-input"
                   type="text"
                   id="name-input"
+                  name="full_name"
                   placeholder="Your full name"
                   autoComplete="name"
                   value={name}
@@ -271,6 +273,7 @@ export function LoginForm() {
                 className="form-input"
                 type={isSignIn ? "text" : "email"}
                 id="email-input"
+                name={isSignIn ? "login_id" : "email"}
                 placeholder={
                   !isSignIn ? "you@example.com" : idField.placeholder
                 }
@@ -304,6 +307,7 @@ export function LoginForm() {
                 className="form-input pwd-input"
                 type={showPassword ? "text" : "password"}
                 id="password-input"
+                name="password"
                 placeholder="Enter your password"
                 autoComplete={isSignIn ? "current-password" : "new-password"}
                 value={password}
@@ -333,11 +337,11 @@ export function LoginForm() {
             aria-live="polite"
             className={cn(
               "msg",
-              message?.type === "error" && "error",
-              message?.type === "success" && "success",
+              shownMessage?.type === "error" && "error",
+              shownMessage?.type === "success" && "success",
             )}
           >
-            {message?.text ?? ""}
+            {shownMessage?.text ?? ""}
           </p>
         </form>
 

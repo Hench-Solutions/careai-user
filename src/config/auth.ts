@@ -44,6 +44,24 @@ export function dashboardPathForRole(role: AccountRole): string {
   return role === "patient" ? ROUTES.patient.dashboard : ROUTES.agent.dashboard;
 }
 
-export function isAgentRole(role: AccountRole): boolean {
-  return role === AGENT_ACCOUNT_ROLE;
+export const LOGIN_PARAMS = { next: "next", reason: "reason" } as const;
+
+export const LOGIN_REASONS = { expired: "expired" } as const;
+
+export function portalBaseForRole(role: AccountRole): string {
+  return role === "patient" ? ROUTES.patient.base : ROUTES.agent.base;
+}
+
+/** A `next` value is usable only when it stays inside the role's own portal. */
+export function safeNextPath(
+  role: AccountRole,
+  next: string | null | undefined,
+): string | null {
+  const base = portalBaseForRole(role);
+  const ok =
+    !!next &&
+    (next === base || next.startsWith(`${base}/`)) &&
+    !next.includes("//") &&
+    !next.includes("\\");
+  return ok ? next : null;
 }

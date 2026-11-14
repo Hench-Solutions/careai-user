@@ -15,18 +15,11 @@ import { cn } from "@/lib/utils";
 const PORTALS = {
   agent: {
     getSections: getAgentNavSections,
-    footer: {
-      initials: careaiMockAgent.initials,
-      name: careaiMockAgent.accountName,
-      role: careaiMockAgent.organization,
-    },
+    footerRole: careaiMockAgent.organization,
   },
   patient: {
     getSections: getPatientNavSections,
-    footer: {
-      initials: careaiMockMember.initials,
-      role: careaiMockMember.accountLabel,
-    },
+    footerRole: careaiMockMember.accountLabel,
   },
 } as const;
 
@@ -38,7 +31,7 @@ export function PortalShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { getSections, footer } = PORTALS[portal];
+  const { getSections, footerRole } = PORTALS[portal];
 
   return (
     <div
@@ -51,7 +44,7 @@ export function PortalShell({
       <PortalSidebar
         logoVariant={portal}
         sections={getSections(pathname)}
-        footer={footer}
+        footerRole={footerRole}
       />
       <main className={careaiPortal.main}>{children}</main>
     </div>

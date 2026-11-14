@@ -1,4 +1,3 @@
-/** Every in-app path lives here; never type a route string in a component. */
 export const ROUTES = {
   home: "/",
   login: "/login",
