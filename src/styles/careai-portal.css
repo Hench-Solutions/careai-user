@@ -3261,38 +3261,155 @@ table.pg-table tr:last-child td {
   cursor: not-allowed;
 }
 
-.careai-portal .careai-code-field {
-  position: relative;
+.careai-portal .careai-code-input {
+  display: flex;
+  gap: 8px;
 }
-.careai-portal .careai-code-menu {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  margin: 0;
-  padding: 6px;
-  list-style: none;
-  max-height: 240px;
-  overflow-y: auto;
-  background: #fff;
-  border: 1.5px solid var(--line);
+.careai-portal .careai-code-input input {
+  flex: 1;
+  min-width: 0;
+}
+.careai-portal .careai-code-open {
+  flex: none;
+  width: 46px;
+  border: none;
   border-radius: 11px;
-  box-shadow: 0 12px 32px rgba(63, 59, 82, 0.12);
+  background: var(--grad);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(214, 35, 140, 0.25);
 }
-.careai-portal .careai-code-menu li {
-  padding: 9px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--ink);
+.careai-portal .careai-code-open svg {
+  width: 18px;
+  height: 18px;
+}
+.careai-portal
+  .lm-field.careai-code-field
+  input[readonly]:not([type="radio"]):not([type="checkbox"]):not(
+    [type="file"]
+  ) {
+  background: #f0eef6;
+  cursor: default;
+}
+
+.careai-portal .careai-code-dialog {
+  width: min(780px, calc(100vw - 24px));
+}
+.careai-portal .careai-code-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  max-height: min(86vh, 720px);
+}
+.careai-portal .careai-code-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  background: var(--grad);
+  color: #fff;
+}
+.careai-portal .careai-code-head h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.careai-portal .careai-code-head svg {
+  width: 18px;
+  height: 18px;
+}
+.careai-portal .careai-code-head button {
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: #fff;
   cursor: pointer;
 }
-.careai-portal .careai-code-menu li strong {
-  color: var(--purple);
+.careai-portal .careai-code-bar {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
 }
-.careai-portal .careai-code-menu li:hover,
-.careai-portal .careai-code-menu li.is-active {
-  background: color-mix(in oklab, var(--purple) 10%, #fff);
+.careai-portal .careai-code-bar input {
+  flex: 1;
+  min-width: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+}
+.careai-portal .careai-code-bar input:focus {
+  border-color: var(--purple);
+}
+.careai-portal .careai-code-bar .lm-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.careai-portal .careai-code-results {
+  flex: 1;
+  min-height: 120px;
+  overflow: auto;
+  padding: 0 20px 20px;
+}
+.careai-portal .careai-code-note {
+  padding: 28px 0;
+  text-align: center;
+  color: var(--sub);
+  font-size: 14px;
+}
+.careai-portal .careai-code-results table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.careai-portal .careai-code-results th {
+  position: sticky;
+  top: 0;
+  padding: 12px;
+  background: color-mix(in oklab, var(--purple) 60%, var(--pink));
+  color: #fff;
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+}
+.careai-portal .careai-code-results th:first-child {
+  border-top-left-radius: 8px;
+}
+.careai-portal .careai-code-results th:last-child {
+  border-top-right-radius: 8px;
+  text-align: center;
+}
+.careai-portal .careai-code-results td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.careai-portal .careai-code-results td:last-child {
+  text-align: center;
+}
+.careai-portal .careai-code-results tbody tr:hover {
+  background: color-mix(in oklab, var(--purple) 7%, #fff);
+}
+.careai-portal .careai-code-results td button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: var(--grad);
+  color: #fff;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+.careai-portal .careai-code-results td button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .careai-portal .careai-dialog {
@@ -3376,20 +3493,45 @@ table.pg-table tr:last-child td {
 }
 
 .lm-upload-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin: 0 auto 22px;
   max-width: 420px;
   text-align: left;
   font-size: 14px;
 }
+.lm-upload-result > div {
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+.lm-upload-result b {
+  display: block;
+  margin-bottom: 6px;
+}
 .lm-upload-result ul {
-  margin: 6px 0 0;
-  padding-left: 20px;
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lm-upload-result li {
+  overflow-wrap: anywhere;
 }
 .lm-upload-result .ok {
   color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+.lm-upload-result .ok li::before {
+  content: "✓";
+  margin-right: 8px;
 }
 .lm-upload-result .bad {
-  color: var(--red);
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
 }
 
 /* Phones and small tablets: the sidebar becomes a slide-in menu */
@@ -3587,4 +3729,24 @@ table.pg-table tr:last-child td {
 }
 .careai-portal .lm-field.has-error .lm-choose-btn {
   box-shadow: 0 0 0 1.5px var(--red);
+}
+
+@media (max-width: 520px) {
+  .careai-portal .careai-code-results {
+    padding: 0 12px 14px;
+  }
+  .careai-portal .careai-code-results th:first-child,
+  .careai-portal .careai-code-results td:first-child {
+    display: none;
+  }
+  .careai-portal .careai-code-results th,
+  .careai-portal .careai-code-results td {
+    padding: 10px 8px;
+  }
+  .careai-portal .careai-code-results td:nth-child(3) {
+    overflow-wrap: anywhere;
+  }
+  .careai-portal .careai-code-bar {
+    padding: 14px 12px;
+  }
 }

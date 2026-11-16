@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+
+import { Check, Search, X } from "lucide-react";
 
 import type { MasterOption } from "@/services/lead";
 
 import { searchCodes } from "@/services/lead";
-
-const SEARCH_DELAY_MS = 250;
-
-type Field = "code" | "desc";
 
 type CareaiCodeSearchProps = {
   /** ICD or CPT: the kind of code to look up. */
@@ -21,7 +19,7 @@ type CareaiCodeSearchProps = {
   descPlaceholder: string;
 };
 
-/** A code and its description as two inputs; typing in either lists matching codes to pick from. */
+/** A code box with a search popup: type related words, read the matches, pick one to fill code and description. */
 export function CareaiCodeSearch({
   type,
   codeName,
@@ -33,26 +31,21 @@ export function CareaiCodeSearch({
 }: CareaiCodeSearchProps) {
   const [code, setCode] = useState("");
   const [desc, setDesc] = useState("");
+  const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
-  const [results, setResults] = useState<MasterOption[]>([]);
-  const [open, setOpen] = useState<Field | null>(null);
-  const [active, setActive] = useState(0);
+  const [results, setResults] = useState<MasterOption[] | null>(null);
+  const [loading, setLoading] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const latestSearch = useRef(0);
+  const codeId = useId();
+  const descId = useId();
+  const titleId = useId();
 
   useEffect(() => {
-    if (!term) return;
-    let stale = false;
-    const timer = setTimeout(async () => {
-      const rows = await searchCodes(type, term);
-      if (stale) return;
-      setResults(rows);
-      setActive(0);
-    }, SEARCH_DELAY_MS);
-    return () => {
-      stale = true;
-      clearTimeout(timer);
-    };
-  }, [term, type]);
+    const dialog = dialogRef.current;
+    if (open && dialog && !dialog.open) dialog.showModal();
+  }, [open]);
 
   useEffect(() => {
     const form = rootRef.current?.closest("form");
@@ -60,99 +53,173 @@ export function CareaiCodeSearch({
     const onReset = () => {
       setCode("");
       setDesc("");
-      setTerm("");
-      setResults([]);
-      setOpen(null);
+      setResults(null);
+      setOpen(false);
     };
     form.addEventListener("reset", onReset);
     return () => form.removeEventListener("reset", onReset);
   }, []);
 
-  const onType = (field: Field, value: string) => {
-    if (field === "code") setCode(value);
-    else setDesc(value);
-    const text = value.trim();
-    setTerm(text);
-    if (!text) setResults([]);
-    setOpen(field);
+  const search = async (text: string) => {
+    const query = text.trim();
+    if (!query) return;
+    const request = ++latestSearch.current;
+    setLoading(true);
+    const rows = await searchCodes(type, query);
+    if (request !== latestSearch.current) return;
+    const seen = new Set<string>();
+    setResults(
+      rows.filter((row) => {
+        const key = `${row.value}|${row.label}`;
+        return seen.has(key) ? false : (seen.add(key), true);
+      }),
+    );
+    setLoading(false);
   };
 
-  const pick = (option: MasterOption | undefined) => {
-    if (!option) return;
+  const openSearch = () => {
+    setTerm(code);
+    setResults(null);
+    setLoading(false);
+    setOpen(true);
+    void search(code);
+  };
+
+  const pick = (option: MasterOption) => {
     setCode(option.value);
     setDesc(option.label);
-    setTerm("");
-    setResults([]);
-    setOpen(null);
+    dialogRef.current?.close();
   };
-
-  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!results.length) return;
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      event.preventDefault();
-      const step = event.key === "ArrowDown" ? 1 : -1;
-      setActive((i) => (i + step + results.length) % results.length);
-    } else if (event.key === "Enter" && open) {
-      event.preventDefault();
-      pick(results[active]);
-    } else if (event.key === "Escape") {
-      setOpen(null);
-    }
-  };
-
-  const suggestions = (field: Field) =>
-    open === field && results.length > 0 ?
-      <ul className="careai-code-menu" role="listbox">
-        {results.map((option, index) => (
-          <li
-            key={option.value}
-            role="option"
-            aria-selected={index === active}
-            className={index === active ? "is-active" : undefined}
-            onMouseDown={(event) => {
-              event.preventDefault();
-              pick(option);
-            }}
-          >
-            <strong>{option.value}</strong> {option.label}
-          </li>
-        ))}
-      </ul>
-    : null;
-
-  const input = (
-    field: Field,
-    name: string,
-    placeholder: string,
-    value: string,
-  ) => (
-    <input
-      type="text"
-      name={name}
-      value={value}
-      placeholder={placeholder}
-      autoComplete="off"
-      role="combobox"
-      aria-autocomplete="list"
-      aria-expanded={open === field && results.length > 0}
-      onChange={(event) => onType(field, event.target.value)}
-      onKeyDown={onKeyDown}
-      onBlur={() => setOpen(null)}
-    />
-  );
 
   return (
     <>
       <div className="lm-field careai-code-field" ref={rootRef}>
-        <label>{codeLabel}</label>
-        {input("code", codeName, codePlaceholder, code)}
-        {suggestions("code")}
+        <label htmlFor={codeId}>{codeLabel}</label>
+        <div className="careai-code-input">
+          <input
+            id={codeId}
+            type="text"
+            name={codeName}
+            value={code}
+            placeholder={codePlaceholder}
+            autoComplete="off"
+            onChange={(event) => {
+              setCode(event.target.value);
+              setDesc("");
+            }}
+          />
+          <button
+            type="button"
+            className="careai-code-open"
+            aria-label={`Search ${codeLabel}`}
+            onClick={openSearch}
+          >
+            <Search aria-hidden />
+          </button>
+        </div>
       </div>
       <div className="lm-field careai-code-field">
-        <label>{descLabel}</label>
-        {input("desc", descName, descPlaceholder, desc)}
-        {suggestions("desc")}
+        <label htmlFor={descId}>{descLabel}</label>
+        <input
+          id={descId}
+          type="text"
+          name={descName}
+          value={desc}
+          placeholder={descPlaceholder}
+          readOnly
+        />
       </div>
+      <dialog
+        ref={dialogRef}
+        className="careai-dialog careai-code-dialog"
+        aria-labelledby={titleId}
+        onClose={() => {
+          latestSearch.current++;
+          setOpen(false);
+        }}
+      >
+        {open ?
+          <>
+            <div className="careai-code-head">
+              <Search aria-hidden />
+              <h2 id={titleId}>{codeLabel} Search</h2>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => dialogRef.current?.close()}
+              >
+                <X aria-hidden />
+              </button>
+            </div>
+            <div className="careai-code-bar">
+              <input
+                type="text"
+                value={term}
+                placeholder="Type a code or a few words, then press Search"
+                aria-label={`Search ${codeLabel}`}
+                autoComplete="off"
+                autoFocus
+                onChange={(event) => setTerm(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  void search(term);
+                }}
+              />
+              <button
+                type="button"
+                className="lm-btn lm-btn-primary"
+                onClick={() => void search(term)}
+              >
+                <Search aria-hidden /> Search
+              </button>
+            </div>
+            <div className="careai-code-results" aria-live="polite">
+              {loading ?
+                <p className="careai-code-note">Searching…</p>
+              : results === null ?
+                <p className="careai-code-note">
+                  Enter a code or related words to see matching options.
+                </p>
+              : results.length === 0 ?
+                <p className="careai-code-note">
+                  No matches found. Try other words.
+                </p>
+              : <table>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>{codeLabel}</th>
+                      <th>{descLabel}</th>
+                      <th>Select</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((option, index) => (
+                      <tr key={`${option.value}-${index}`}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <strong>{option.value}</strong>
+                        </td>
+                        <td>{option.label}</td>
+                        <td>
+                          <button
+                            type="button"
+                            aria-label={`Select ${option.value}`}
+                            onClick={() => pick(option)}
+                          >
+                            <Check aria-hidden />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              }
+            </div>
+          </>
+        : null}
+      </dialog>
     </>
   );
 }

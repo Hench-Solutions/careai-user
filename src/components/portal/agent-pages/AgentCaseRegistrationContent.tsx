@@ -699,19 +699,19 @@ export function AgentCaseRegistrationContent() {
                 type={MASTER_CODE_TYPES.icd}
                 codeName="IcdCode"
                 codeLabel="ICD Code"
-                codePlaceholder="ICD code"
+                codePlaceholder="Enter or search ICD code"
                 descName="IcdDesc"
                 descLabel="ICD Description"
-                descPlaceholder="ICD description"
+                descPlaceholder="Auto-filled from search"
               />
               <CareaiCodeSearch
                 type={MASTER_CODE_TYPES.cpt}
                 codeName="CptCode"
                 codeLabel="CPT Code"
-                codePlaceholder="CPT code"
+                codePlaceholder="Enter or search CPT code"
                 descName="CptDesc"
                 descLabel="CPT Description"
-                descPlaceholder="CPT description"
+                descPlaceholder="Auto-filled from search"
               />
             </div>
 
@@ -898,7 +898,7 @@ export function AgentCaseRegistrationContent() {
           <div className="lm-upload-result" role="status">
             {uploadResult.uploaded.length > 0 ?
               <div className="ok">
-                Documents uploaded:
+                <b>Documents uploaded</b>
                 <ul>
                   {uploadResult.uploaded.map((name) => (
                     <li key={name}>{name}</li>
@@ -908,7 +908,7 @@ export function AgentCaseRegistrationContent() {
             : null}
             {uploadResult.errors.length > 0 ?
               <div className="bad">
-                Not uploaded:
+                <b>Not uploaded</b>
                 <ul>
                   {uploadResult.errors.map((message) => (
                     <li key={message}>{message}</li>
