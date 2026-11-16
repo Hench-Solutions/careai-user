@@ -27,6 +27,8 @@ import {
 } from "@/config/lead";
 import { ApiError } from "@/lib/api/client";
 import {
+  ID_FILE,
+  MEDICAL_FILES,
   normalizeCallingCode,
   validateLead,
   validateUploads,
@@ -78,6 +80,7 @@ export function AgentCaseRegistrationContent() {
   const [medFileLabel, setMedFileLabel] = useState<string | null>(null);
   const [stepError, setStepError] = useState<string | null>(null);
   const [issues, setIssues] = useState<string[]>([]);
+  const [invalid, setInvalid] = useState<readonly string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [treatment, setTreatment] = useState("");
   const [provider, setProvider] = useState("");
@@ -209,6 +212,14 @@ export function AgentCaseRegistrationContent() {
     );
   };
 
+  const clearInvalid = (field: string) =>
+    setInvalid((current) =>
+      current.includes(field) ? current.filter((f) => f !== field) : current,
+    );
+
+  const fieldClass = (...fields: string[]) =>
+    cn("lm-field", fields.some((f) => invalid.includes(f)) && "has-error");
+
   const goStep = useCallback((n: WizardStep) => {
     setStepError(null);
     setStep(n);
@@ -231,14 +242,15 @@ export function AgentCaseRegistrationContent() {
       Array.from(input?.files ?? []);
     const found: LeadIssue[] = [
       ...validateLead(readLead(form)),
-      ...validateUploads(files(idFileRef.current), 1),
-      ...validateUploads(files(medFileRef.current), 2),
+      ...validateUploads(files(idFileRef.current), 1, ID_FILE),
+      ...validateUploads(files(medFileRef.current), 2, MEDICAL_FILES),
     ].filter((issue) => steps.includes(issue.step));
     return found;
   };
 
   const review = (found: LeadIssue[]) => {
     setIssues([...new Set(found.map((issue) => issue.message))]);
+    setInvalid(found.map((issue) => issue.field));
     const first = found[0];
     if (first) goStep(first.step);
   };
@@ -313,6 +325,7 @@ export function AgentCaseRegistrationContent() {
     setIdFileLabel("No file chosen");
     setMedFileLabel(null);
     setStepError(null);
+    setInvalid([]);
     setSubmitting(false);
     setTreatment("");
     setProvider("");
@@ -368,6 +381,10 @@ export function AgentCaseRegistrationContent() {
           ref={formRef}
           className="lm-form-card"
           onSubmit={handleSubmit}
+          onInput={(event) => {
+            const { name } = event.target as HTMLInputElement;
+            if (name) clearInvalid(name);
+          }}
           noValidate
         >
           <input type="hidden" name="Source" value={agentSource} />
@@ -400,7 +417,7 @@ export function AgentCaseRegistrationContent() {
             </div>
 
             <div className="lm-grid2">
-              <div className="lm-field">
+              <div className={fieldClass("FirstName")}>
                 <label>
                   First Name <span className="req">*</span>
                 </label>
@@ -423,7 +440,7 @@ export function AgentCaseRegistrationContent() {
                 <label>Last Name</label>
                 <input type="text" name="LastName" placeholder="Last Name" />
               </div>
-              <div className="lm-field">
+              <div className={fieldClass("EmailId")}>
                 <label>Email Address</label>
                 <input
                   type="email"
@@ -435,12 +452,13 @@ export function AgentCaseRegistrationContent() {
                 <label>Date of Birth</label>
                 <CareaiDateField ref={dobRef} name="Dob" disableFuture />
               </div>
-              <div className="lm-field">
+              <div className={fieldClass("Gender")}>
                 <label>
                   Gender <span className="req">*</span>
                 </label>
                 <CareaiSelect
                   name="Gender"
+                  onChange={() => clearInvalid("Gender")}
                   defaultValue=""
                   placeholder="--Select--"
                   options={genderOptions}
@@ -456,11 +474,11 @@ export function AgentCaseRegistrationContent() {
                   options={nationalityOptions}
                 />
               </div>
-              <div className="lm-field">
+              <div className={fieldClass("CallingCd", "MobileNo")}>
                 <label>
                   Contact Number <span className="req">*</span>
                 </label>
-                <div className="lm-grid2" style={{ gap: "0.5rem" }}>
+                <div className="lm-phone-row">
                   <input
                     type="text"
                     name="CallingCd"
@@ -520,30 +538,32 @@ export function AgentCaseRegistrationContent() {
             </div>
 
             <div className="lm-grid2">
-              <div className="lm-field">
+              <div className={fieldClass("PatientLocation")}>
                 <label>
                   Patient Location <span className="req">*</span>
                 </label>
                 <CareaiSelect
                   name="PatientLocation"
+                  onChange={() => clearInvalid("PatientLocation")}
                   defaultValue=""
                   placeholder="--Select--"
                   searchable
                   options={locationOptions}
                 />
               </div>
-              <div className="lm-field">
+              <div className={fieldClass("DocumentType")}>
                 <label>
                   Identification Document <span className="req">*</span>
                 </label>
                 <CareaiSelect
                   name="DocumentType"
+                  onChange={() => clearInvalid("DocumentType")}
                   defaultValue=""
                   placeholder="--Select--"
                   options={docTypeOptions}
                 />
               </div>
-              <div className="lm-field">
+              <div className={fieldClass("DocumentNo")}>
                 <label>
                   Document Number <span className="req">*</span>
                 </label>
@@ -555,7 +575,7 @@ export function AgentCaseRegistrationContent() {
               </div>
             </div>
 
-            <div className="lm-field">
+            <div className={fieldClass(ID_FILE)}>
               <label htmlFor="id-doc-input">
                 Upload Identification Document
               </label>
@@ -566,7 +586,10 @@ export function AgentCaseRegistrationContent() {
                   type="file"
                   className="lm-file-input"
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  onChange={onIdFileChange}
+                  onChange={(event) => {
+                    onIdFileChange(event);
+                    clearInvalid(ID_FILE);
+                  }}
                 />
                 <span className="lm-choose-btn">Choose File</span>
                 <span className="lm-file-name">{idFileLabel}</span>
@@ -616,7 +639,7 @@ export function AgentCaseRegistrationContent() {
             </div>
 
             <div className="lm-grid2">
-              <div className="lm-field">
+              <div className={fieldClass("TreatmentType")}>
                 <label>
                   Treatment Type <span className="req">*</span>
                 </label>
@@ -625,7 +648,10 @@ export function AgentCaseRegistrationContent() {
                   defaultValue=""
                   placeholder="--Select--"
                   options={treatmentOptions}
-                  onChange={setTreatment}
+                  onChange={(value) => {
+                    setTreatment(value);
+                    clearInvalid("TreatmentType");
+                  }}
                 />
               </div>
               <div className="lm-field">
@@ -704,7 +730,7 @@ export function AgentCaseRegistrationContent() {
               />
             </div>
 
-            <div className="lm-field">
+            <div className={fieldClass(MEDICAL_FILES)}>
               <label htmlFor="med-reports-input">Medical Reports</label>
               <label
                 className={cn("lm-upload", medFileLabel && "has-file")}
@@ -717,7 +743,10 @@ export function AgentCaseRegistrationContent() {
                   className="lm-file-input"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   multiple
-                  onChange={onMedFileChange}
+                  onChange={(event) => {
+                    onMedFileChange(event);
+                    clearInvalid(MEDICAL_FILES);
+                  }}
                 />
                 <svg
                   fill="none"
@@ -792,7 +821,7 @@ export function AgentCaseRegistrationContent() {
             </div>
 
             <div className="lm-grid2">
-              <div className="lm-field">
+              <div className={fieldClass("PaymentMode")}>
                 <label>
                   Payment Mode <span className="req">*</span>
                 </label>
@@ -801,7 +830,10 @@ export function AgentCaseRegistrationContent() {
                   defaultValue=""
                   placeholder="--Select--"
                   options={paymentOptions}
-                  onChange={(value) => setPaymentMode(value)}
+                  onChange={(value) => {
+                    setPaymentMode(value);
+                    clearInvalid("PaymentMode");
+                  }}
                 />
               </div>
               <div className="lm-field">

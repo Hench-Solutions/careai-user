@@ -10,7 +10,15 @@ import {
   LEAD_UPLOAD_MAX_FILE_MB,
 } from "@/config/lead";
 
-export type LeadIssue = { step: 1 | 2 | 3; message: string };
+/** `field` is the form field name, or an upload key, so the form can mark it. */
+export type LeadIssue = {
+  step: 1 | 2 | 3;
+  message: string;
+  field: LeadField | typeof ID_FILE | typeof MEDICAL_FILES;
+};
+
+export const ID_FILE = "idFile";
+export const MEDICAL_FILES = "medicalFiles";
 
 type LeadValues = Partial<Record<LeadField, string>>;
 
@@ -27,20 +35,32 @@ export function validateLead(values: LeadValues): LeadIssue[] {
   const issues: LeadIssue[] = [];
   for (const { field, label, step } of LEAD_REQUIRED_FIELDS) {
     if (isBlank(values[field])) {
-      issues.push({ step, message: LEAD_MESSAGES.required(label) });
+      issues.push({ step, field, message: LEAD_MESSAGES.required(label) });
     }
   }
   const email = values.EmailId?.trim();
   if (email && !LEAD_EMAIL_PATTERN.test(email)) {
-    issues.push({ step: 1, message: LEAD_MESSAGES.emailInvalid });
+    issues.push({
+      step: 1,
+      field: "EmailId",
+      message: LEAD_MESSAGES.emailInvalid,
+    });
   }
   const calling = values.CallingCd?.trim();
   if (calling && !LEAD_CALLING_CODE_PATTERN.test(calling)) {
-    issues.push({ step: 1, message: LEAD_MESSAGES.callingCodeInvalid });
+    issues.push({
+      step: 1,
+      field: "CallingCd",
+      message: LEAD_MESSAGES.callingCodeInvalid,
+    });
   }
   const phone = values.MobileNo?.trim();
   if (phone && !new RegExp(`^\\d{1,${LEAD_PHONE_MAX_DIGITS}}$`).test(phone)) {
-    issues.push({ step: 1, message: LEAD_MESSAGES.phoneInvalid });
+    issues.push({
+      step: 1,
+      field: "MobileNo",
+      message: LEAD_MESSAGES.phoneInvalid,
+    });
   }
   return issues;
 }
@@ -49,6 +69,7 @@ export function validateLead(values: LeadValues): LeadIssue[] {
 export function validateUploads(
   files: readonly File[],
   step: 1 | 2,
+  field: typeof ID_FILE | typeof MEDICAL_FILES,
 ): LeadIssue[] {
   const issues: LeadIssue[] = [];
   for (const file of files) {
@@ -56,10 +77,15 @@ export function validateUploads(
     if (!(LEAD_UPLOAD_EXTENSIONS as readonly string[]).includes(extension)) {
       issues.push({
         step,
+        field,
         message: LEAD_MESSAGES.fileTypeNotAllowed(file.name),
       });
     } else if (file.size > LEAD_UPLOAD_MAX_FILE_MB * 1024 * 1024) {
-      issues.push({ step, message: LEAD_MESSAGES.fileTooLarge(file.name) });
+      issues.push({
+        step,
+        field,
+        message: LEAD_MESSAGES.fileTooLarge(file.name),
+      });
     }
   }
   return issues;

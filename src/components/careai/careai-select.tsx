@@ -143,9 +143,15 @@ export const CareaiSelect = forwardRef<CareaiSelectHandle, CareaiSelectProps>(
     const needle = query.trim().toLowerCase();
     const visibleOptions =
       searchable && needle ?
-        options.filter(
-          (o) => o.value !== "" && o.label.toLowerCase().includes(needle),
-        )
+        options
+          .filter(
+            (o) => o.value !== "" && o.label.toLowerCase().includes(needle),
+          )
+          .sort(
+            (a, b) =>
+              Number(!a.label.toLowerCase().startsWith(needle)) -
+              Number(!b.label.toLowerCase().startsWith(needle)),
+          )
       : options;
     const enabledOptions = visibleOptions.filter((o) => !o.disabled);
     const displayLabel = findLabel(options, selectedValue, placeholder);

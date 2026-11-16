@@ -3564,3 +3564,27 @@ table.pg-table tr:last-child td {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Contact number: short calling-code box beside the phone input */
+.lm-phone-row {
+  display: grid;
+  grid-template-columns: minmax(64px, 88px) minmax(0, 1fr);
+  gap: 8px;
+}
+
+/* Fields the validation popup flagged; cleared as the agent edits them */
+.careai-portal .lm-field.has-error > label:not(.lm-file-row, .lm-upload) {
+  color: var(--red);
+}
+.careai-portal
+  .lm-field.has-error
+  input:not([type="radio"]):not([type="checkbox"]):not([type="file"]),
+.careai-portal .lm-field.has-error .careai-select-trigger,
+.careai-portal .lm-field.has-error .careai-date-field-trigger,
+.careai-portal .lm-field.has-error .lm-upload {
+  border-color: var(--red);
+  background-color: #fef2f2;
+}
+.careai-portal .lm-field.has-error .lm-choose-btn {
+  box-shadow: 0 0 0 1.5px var(--red);
+}
