@@ -87,10 +87,7 @@ export function PatientContactUsContent() {
         </div>
       </div>
 
-      <div
-        className="pg-panels"
-        style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 20 }}
-      >
+      <div className="pg-panels pg-panels--contact">
         <div className="pg-section" id="form" style={{ marginBottom: "0" }}>
           <div className="pg-section-head">
             <div className="pg-section-title">

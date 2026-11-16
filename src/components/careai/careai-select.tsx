@@ -17,7 +17,7 @@ export type CareaiSelectHandle = {
   focus: () => void;
 };
 
-export type CareaiSelectProps = {
+type CareaiSelectProps = {
   id?: string;
   name?: string;
   className?: string;
@@ -28,6 +28,8 @@ export type CareaiSelectProps = {
   required?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** Adds a search box: typing narrows the list, as in the core app. */
+  searchable?: boolean;
   "aria-label"?: string;
   "aria-labelledby"?: string;
 };
@@ -55,6 +57,7 @@ export const CareaiSelect = forwardRef<CareaiSelectHandle, CareaiSelectProps>(
       required,
       disabled,
       placeholder,
+      searchable,
       "aria-label": ariaLabel,
       "aria-labelledby": ariaLabelledBy,
     },
@@ -66,9 +69,11 @@ export const CareaiSelect = forwardRef<CareaiSelectHandle, CareaiSelectProps>(
 
     const [open, setOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState(-1);
+    const [query, setQuery] = useState("");
     const rootRef = useRef<HTMLDivElement>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const listRef = useRef<HTMLUListElement>(null);
+    const searchRef = useRef<HTMLInputElement>(null);
     const listId = id ? `${id}-listbox` : undefined;
 
     const setSelectedValue = useCallback(
@@ -131,13 +136,26 @@ export const CareaiSelect = forwardRef<CareaiSelectHandle, CareaiSelectProps>(
       el?.scrollIntoView({ block: "nearest" });
     }, [open, activeIndex]);
 
-    const enabledOptions = options.filter((o) => !o.disabled);
+    useEffect(() => {
+      if (open && searchable) searchRef.current?.focus();
+    }, [open, searchable]);
+
+    const needle = query.trim().toLowerCase();
+    const visibleOptions =
+      searchable && needle ?
+        options.filter(
+          (o) => o.value !== "" && o.label.toLowerCase().includes(needle),
+        )
+      : options;
+    const enabledOptions = visibleOptions.filter((o) => !o.disabled);
     const displayLabel = findLabel(options, selectedValue, placeholder);
     const isPlaceholder = !selectedValue && Boolean(placeholder);
 
-    const openList = () => {
+    const openList = (seed = "") => {
       if (disabled) return;
-      const idx = enabledOptions.findIndex((o) => o.value === selectedValue);
+      setQuery(seed);
+      const idx =
+        seed ? 0 : enabledOptions.findIndex((o) => o.value === selectedValue);
       setActiveIndex(idx >= 0 ? idx : 0);
       setOpen(true);
     };
@@ -150,9 +168,22 @@ export const CareaiSelect = forwardRef<CareaiSelectHandle, CareaiSelectProps>(
     };
 
     const onTriggerKeyDown = (
-      event: React.KeyboardEvent<HTMLButtonElement>,
+      event: React.KeyboardEvent<HTMLButtonElement | HTMLInputElement>,
     ) => {
       if (disabled) return;
+      if (
+        searchable &&
+        !open &&
+        event.key.length === 1 &&
+        event.key !== " " &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        openList(event.key);
+        return;
+      }
       switch (event.key) {
         case "ArrowDown":
         case "ArrowUp":
@@ -169,19 +200,20 @@ export const CareaiSelect = forwardRef<CareaiSelectHandle, CareaiSelectProps>(
           break;
         case "Enter":
         case " ":
+          if (searchable && open && event.key === " ") break;
           event.preventDefault();
           if (!open) openList();
           else if (activeIndex >= 0 && enabledOptions[activeIndex])
             choose(enabledOptions[activeIndex]);
           break;
         case "Home":
-          if (open) {
+          if (open && !searchable) {
             event.preventDefault();
             setActiveIndex(0);
           }
           break;
         case "End":
-          if (open) {
+          if (open && !searchable) {
             event.preventDefault();
             setActiveIndex(enabledOptions.length - 1);
           }
@@ -245,7 +277,29 @@ export const CareaiSelect = forwardRef<CareaiSelectHandle, CareaiSelectProps>(
               : undefined
             }
           >
-            {options.map((option, index) => {
+            {searchable ?
+              <li role="presentation" className="careai-select-search">
+                <input
+                  ref={searchRef}
+                  type="text"
+                  value={query}
+                  placeholder="Type to search"
+                  aria-label="Search options"
+                  autoComplete="off"
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setActiveIndex(0);
+                  }}
+                  onKeyDown={onTriggerKeyDown}
+                />
+              </li>
+            : null}
+            {searchable && needle && visibleOptions.length === 0 ?
+              <li role="presentation" className="careai-select-empty">
+                No matches
+              </li>
+            : null}
+            {visibleOptions.map((option, index) => {
               const enabledIdx = enabledOptions.indexOf(option);
               const isActive = open && enabledIdx === activeIndex;
               const isSelected = option.value === selectedValue;

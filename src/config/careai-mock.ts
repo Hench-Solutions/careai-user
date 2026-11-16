@@ -11,11 +11,9 @@ export const careaiMockAgent = {
   organization: "Prospera Global",
 } as const;
 
-export type AgentCaseBadge = "Treatment Ongoing" | "Under Review";
+type AgentCaseBadge = "Treatment Ongoing" | "Under Review";
 
-export type AgentActionPriority = "High" | "Medium" | "Low";
-
-export type AgentInvoiceStatus = "paid" | "pending" | "overdue";
+type AgentInvoiceStatus = "paid" | "pending" | "overdue";
 
 /** Portfolio KPIs: 24 total = 4 active (case status list) + 20 closed (historical). */
 export const careaiMockAgentDashboardStats = {

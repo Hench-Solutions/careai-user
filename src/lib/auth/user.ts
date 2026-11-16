@@ -20,7 +20,7 @@ export type SessionUser = {
   initials: string;
 };
 
-export function initialsOf(name: string): string {
+function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "";
   const letters =

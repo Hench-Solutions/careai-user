@@ -4,12 +4,8 @@ import type { LeadField } from "@/config/lead";
 import type { LeadRegistrationResult } from "@/services/lead/lead.types";
 
 import { API_ENDPOINTS, API_MESSAGES } from "@/config/api";
-import {
-  LEAD_FIELDS,
-  LEAD_JSON_MAX_BYTES,
-  LEAD_MESSAGES,
-  LEAD_TYPES,
-} from "@/config/lead";
+import { LEAD_FIELDS, LEAD_JSON_MAX_BYTES, LEAD_TYPES } from "@/config/lead";
+import { normalizeCallingCode, validateLead } from "@/lib/lead/validate";
 import {
   jsonEnvelope,
   postToApiWithPortalToken,
@@ -29,12 +25,9 @@ export async function POST(request: NextRequest) {
     LEAD_FIELDS.map((field) => [field, stringField(body, field)]),
   ) as Record<LeadField, string>;
   payload.LeadType ||= LEAD_TYPES.normal;
-  if (!payload.FirstName.trim()) {
-    return jsonEnvelope(null, 400, LEAD_MESSAGES.firstNameRequired);
-  }
-  if (!payload.TreatmentType.trim()) {
-    return jsonEnvelope(null, 400, LEAD_MESSAGES.treatmentTypeRequired);
-  }
+  payload.CallingCd = normalizeCallingCode(payload.CallingCd);
+  const [issue] = validateLead(payload);
+  if (issue) return jsonEnvelope(null, 400, issue.message);
 
   const result = await postToApiWithPortalToken<LeadRegistrationResult>(
     request,

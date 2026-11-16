@@ -66,6 +66,8 @@ type ApiRequest = {
   failMessage: string;
   /** Accept an upload-style reply that has no `responseObj` and use the whole body as the data. */
   bodyIsData?: boolean;
+  /** What a 204 (the API found no rows) means to the caller; without it a 204 is a failure. */
+  noRows?: unknown;
 };
 
 /**
@@ -74,7 +76,16 @@ type ApiRequest = {
  */
 async function callApi<T>(
   source: Pick<NextRequest, "headers">,
-  { method, path, body, json, token, failMessage, bodyIsData }: ApiRequest,
+  {
+    method,
+    path,
+    body,
+    json,
+    token,
+    failMessage,
+    bodyIsData,
+    noRows,
+  }: ApiRequest,
 ): Promise<ApiCall<T>> {
   const headers: Record<string, string> = {};
   if (json) headers["Content-Type"] = "application/json";
@@ -97,6 +108,10 @@ async function callApi<T>(
     });
   } catch {
     return fail(502, API_MESSAGES.network);
+  }
+
+  if (res.status === 204 && noRows !== undefined) {
+    return { ok: true, data: noRows as T };
   }
 
   const envelope = (await res
@@ -151,7 +166,7 @@ export function postToApiWithPortalToken<T>(
   );
 }
 
-export function getToApiWithPortalToken<T>(
+function getToApiWithPortalToken<T>(
   request: NextRequest,
   pathWithQuery: string,
   failMessage: string,
@@ -162,6 +177,7 @@ export function getToApiWithPortalToken<T>(
       path: pathWithQuery,
       token,
       failMessage,
+      noRows: [],
     }),
   );
 }
@@ -230,4 +246,34 @@ export async function proxyMasterList(
     API_MESSAGES.generic,
   );
   return result.ok ? jsonEnvelope(result.data) : result.response;
+}
+
+type CodeRow = { cd: string; nm: string };
+
+/** ICD / CPT lookup for the case form's code pickers; replies in the same shape as the master lists. */
+export async function proxyCodeSearch(
+  request: NextRequest,
+  config: { allowed: readonly string[]; apiPath: string; maxLength: number },
+): Promise<NextResponse> {
+  const { searchParams } = request.nextUrl;
+  const type = searchParams.get(MASTER_QUERY.codeType)?.trim() ?? "";
+  const term = searchParams.get(MASTER_QUERY.codeQuery)?.trim() ?? "";
+  if (!config.allowed.includes(type) || term.length > config.maxLength) {
+    return jsonEnvelope(null, 400, API_MESSAGES.invalidMasterList);
+  }
+  if (!term) return jsonEnvelope([]);
+
+  const query = new URLSearchParams({
+    [MASTER_QUERY.codeType]: type,
+    [MASTER_QUERY.codeQuery]: term,
+  });
+  const result = await getToApiWithPortalToken<CodeRow[]>(
+    request,
+    `${config.apiPath}?${query}`,
+    API_MESSAGES.generic,
+  );
+  if (!result.ok) return result.response;
+  return jsonEnvelope(
+    result.data.map((row) => ({ value: row.cd, text: row.nm })),
+  );
 }

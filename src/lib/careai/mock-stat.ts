@@ -1,5 +1,5 @@
 /** Safe read for dashboard KPI mock objects ({ value, badge }). */
-export type CareaiMockStat = {
+type CareaiMockStat = {
   value: string;
   badge: string;
 };

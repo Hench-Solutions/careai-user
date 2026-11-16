@@ -2,11 +2,13 @@ import { Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { X } from "lucide-react";
+
 import type { ReactNode } from "react";
 
 import { PortalSidebarFoot } from "@/components/portal/portal-sidebar-foot";
 
-export type PortalNavItem = {
+type PortalNavItem = {
   href: string;
   label: string;
   icon: ReactNode;
@@ -23,6 +25,10 @@ const CARE_AI_LOGO_WIDTH = 1024;
 const CARE_AI_LOGO_HEIGHT = 304;
 
 type PortalSidebarProps = {
+  id: string;
+  /** Phone layout: whether the slide-in menu is showing. */
+  open: boolean;
+  onClose: () => void;
   sections: PortalNavSection[];
   logoVariant: "agent" | "patient";
   /** Role line under the signed-in user's name. */
@@ -30,12 +36,23 @@ type PortalSidebarProps = {
 };
 
 export function PortalSidebar({
+  id,
+  open,
+  onClose,
   sections,
   logoVariant,
   footerRole,
 }: PortalSidebarProps) {
   return (
-    <aside className="lm-sidebar">
+    <aside id={id} className={open ? "lm-sidebar open" : "lm-sidebar"}>
+      <button
+        type="button"
+        className="lm-sidebar-close"
+        aria-label="Close menu"
+        onClick={onClose}
+      >
+        <X aria-hidden size={18} />
+      </button>
       {logoVariant === "agent" ?
         <div className="lm-logo">
           <div className="lm-logo-mark">

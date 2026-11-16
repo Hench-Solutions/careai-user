@@ -1,14 +1,14 @@
 import { ROUTES } from "@/config/routes";
 
 /** Facilitator accounts use the agent (business) portal. */
-export const AGENT_ACCOUNT_ROLE = "facilitator" as const;
+const AGENT_ACCOUNT_ROLE = "facilitator" as const;
 
-export const accountRoles = ["patient", AGENT_ACCOUNT_ROLE] as const;
+const accountRoles = ["patient", AGENT_ACCOUNT_ROLE] as const;
 
 export type AccountRole = (typeof accountRoles)[number];
 
 /** Wire values of the API's `User_Type`. */
-export const API_USER_TYPES = {
+const API_USER_TYPES = {
   patient: "PATIENT",
   agent: "AGENT",
 } as const;

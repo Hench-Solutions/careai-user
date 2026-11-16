@@ -82,7 +82,7 @@ export function SectionHeader({
   );
 }
 
-export type FeatureIconTint =
+type FeatureIconTint =
   "purple" | "pink" | "green" | "amber" | "blue" | "lavender";
 
 export function FeatureGrid({

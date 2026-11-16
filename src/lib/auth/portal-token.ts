@@ -3,7 +3,7 @@ import type { AccountRole } from "@/config/auth";
 import { roleForApiUserType } from "@/config/auth";
 import { PORTAL_CLAIMS } from "@/config/portal-session";
 
-export type PortalTokenClaims = {
+type PortalTokenClaims = {
   role: AccountRole;
   /** Expiry, seconds since epoch. */
   exp: number;

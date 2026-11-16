@@ -16,7 +16,7 @@ export type CareaiDateFieldHandle = {
   focus: () => void;
 };
 
-export type CareaiDateFieldProps = {
+type CareaiDateFieldProps = {
   id?: string;
   name?: string;
   className?: string;
@@ -26,9 +26,14 @@ export type CareaiDateFieldProps = {
   required?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** Dates after today cannot be picked (a date of birth, for example). */
+  disableFuture?: boolean;
   "aria-label"?: string;
   "aria-labelledby"?: string;
 };
+
+const MIN_YEAR = 1900;
+const FUTURE_YEARS = 10;
 
 const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
 
@@ -156,6 +161,7 @@ export const CareaiDateField = forwardRef<
     required,
     disabled,
     placeholder = "dd/mm/yyyy",
+    disableFuture,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledBy,
   },
@@ -240,6 +246,23 @@ export const CareaiDateField = forwardRef<
     setOpen(false);
     triggerRef.current?.focus();
   };
+
+  const maxIso = disableFuture ? todayIso() : "";
+  const maxParts = parseIsoDate(maxIso);
+  const maxYear = maxParts?.y ?? new Date().getFullYear() + FUTURE_YEARS;
+  const years = Array.from(
+    { length: maxYear - MIN_YEAR + 1 },
+    (_, i) => maxYear - i,
+  );
+  const atLatestMonth =
+    !!maxParts &&
+    (view.y > maxParts.y || (view.y === maxParts.y && view.m >= maxParts.m));
+
+  const setViewYear = (y: number) =>
+    setView(({ m }) => ({
+      y,
+      m: maxParts && y === maxParts.y ? Math.min(m, maxParts.m) : m,
+    }));
 
   const shiftMonth = (delta: number) => {
     setView(({ y, m }) => {
@@ -337,12 +360,44 @@ export const CareaiDateField = forwardRef<
               ‹
             </button>
             <span className="careai-date-popover-title">
-              {MONTH_LABELS[view.m - 1]} {view.y}
+              <select
+                aria-label="Month"
+                value={view.m}
+                onChange={(event) =>
+                  setView(({ y }) => ({ y, m: Number(event.target.value) }))
+                }
+              >
+                {MONTH_LABELS.map((label, index) => (
+                  <option
+                    key={label}
+                    value={index + 1}
+                    disabled={
+                      !!maxParts &&
+                      view.y === maxParts.y &&
+                      index + 1 > maxParts.m
+                    }
+                  >
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Year"
+                value={view.y}
+                onChange={(event) => setViewYear(Number(event.target.value))}
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </span>
             <button
               type="button"
               className="careai-date-nav"
               aria-label="Next month"
+              disabled={atLatestMonth}
               onClick={() => shiftMonth(1)}
             >
               ›
@@ -375,6 +430,7 @@ export const CareaiDateField = forwardRef<
                     .join(" ")}
                   aria-label={formatDisplayDate(iso)}
                   aria-selected={isSelected}
+                  disabled={!!maxIso && iso > maxIso}
                   onClick={() => chooseDay(cell)}
                 >
                   {cell.day}

@@ -3,6 +3,7 @@ export {
   uploadLeadDocuments,
   fetchMasterDropdown,
   fetchMasterItems,
+  searchCodes,
 } from "./lead.service";
 export type {
   LeadRegistrationPayload,

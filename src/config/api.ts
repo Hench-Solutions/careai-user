@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
   },
   master: {
     items: "/Master/items",
+    codeSearch: "/Master/code-search",
     portalDropdown: "/PortalMaster/dropdown",
   },
 } as const;
@@ -31,6 +32,7 @@ export const BFF_ENDPOINTS = {
   master: {
     dropdown: "/api/master/dropdown",
     items: "/api/master/items",
+    codeSearch: "/api/master/code-search",
   },
 } as const;
 
@@ -39,6 +41,8 @@ export const MASTER_QUERY = {
   mode: "mode",
   itemType: "itemType",
   filterId: "filterId",
+  codeType: "type",
+  codeQuery: "q",
 } as const;
 
 export const MASTER_DROPDOWN_MODES = {
@@ -55,7 +59,14 @@ export const MASTER_DROPDOWN_MODES = {
 export const MASTER_ITEM_TYPES = {
   gender: "Gender",
   treatmentType: "TreatmentType",
+  department: "ProviderDepartment",
+  paymentMode: "PaymentMode",
 } as const;
+
+/** `type` values of Master/code-search the portal may ask for. */
+export const MASTER_CODE_TYPES = { icd: "ICD", cpt: "CPT" } as const;
+
+export const MASTER_CODE_QUERY_MAX_LENGTH = 50;
 
 /** `filterId` that limits ddlDocumentType to the documents a lead takes. */
 export const MASTER_LEAD_DOCUMENTS_FILTER = "LEAD_ID";

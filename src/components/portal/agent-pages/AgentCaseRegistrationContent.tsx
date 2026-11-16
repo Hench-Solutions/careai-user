@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CareaiDateFieldHandle } from "@/components/careai/careai-date-field";
-import type { CareaiSelectHandle } from "@/components/careai/careai-select";
+import type { LeadIssue } from "@/lib/lead/validate";
 import type { LeadRegistrationPayload, MasterOption } from "@/services/lead";
 
+import { CareaiCodeSearch } from "@/components/careai/careai-code-search";
 import { CareaiDateField } from "@/components/careai/careai-date-field";
 import { CareaiSelect } from "@/components/careai/careai-select";
-import { careaiOptionsFromLabels } from "@/components/careai/select-options";
+import { CareaiValidationDialog } from "@/components/careai/careai-validation-dialog";
 import {
+  MASTER_CODE_TYPES,
   MASTER_DROPDOWN_MODES,
   MASTER_ITEM_TYPES,
   MASTER_LEAD_DOCUMENTS_FILTER,
@@ -19,10 +21,16 @@ import {
   DEFAULT_CALLING_CD,
   LEAD_FIELDS,
   LEAD_MESSAGES,
+  LEAD_PHONE_MAX_DIGITS,
+  LEAD_SOURCE_AGENT_LABEL,
   LEAD_TYPES,
-  PAYMENT_MODE_OPTIONS,
 } from "@/config/lead";
 import { ApiError } from "@/lib/api/client";
+import {
+  normalizeCallingCode,
+  validateLead,
+  validateUploads,
+} from "@/lib/lead/validate";
 import { cn } from "@/lib/utils";
 import {
   fetchMasterDropdown,
@@ -62,53 +70,110 @@ export function AgentCaseRegistrationContent() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [memberId, setMemberId] = useState("");
   const [claimNo, setClaimNo] = useState("");
+  const [uploadResult, setUploadResult] = useState<{
+    uploaded: string[];
+    errors: string[];
+  } | null>(null);
   const [idFileLabel, setIdFileLabel] = useState("No file chosen");
   const [medFileLabel, setMedFileLabel] = useState<string | null>(null);
   const [stepError, setStepError] = useState<string | null>(null);
+  const [issues, setIssues] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [treatment, setTreatment] = useState("");
+  const [provider, setProvider] = useState("");
   const [paymentMode, setPaymentMode] = useState("");
-  const [sourceOptions, setSourceOptions] = useState([BLANK_OPTION]);
+  const [agentSource, setAgentSource] = useState("");
   const [docTypeOptions, setDocTypeOptions] = useState([BLANK_OPTION]);
   const [nationalityOptions, setNationalityOptions] = useState([BLANK_OPTION]);
   const [locationOptions, setLocationOptions] = useState([BLANK_OPTION]);
   const [genderOptions, setGenderOptions] = useState([BLANK_OPTION]);
   const [treatmentOptions, setTreatmentOptions] = useState([BLANK_OPTION]);
+  const [providerOptions, setProviderOptions] = useState([BLANK_OPTION]);
+  const [paymentOptions, setPaymentOptions] = useState([BLANK_OPTION]);
+  const [departmentOptions, setDepartmentOptions] = useState([BLANK_OPTION]);
+  const [branchOptions, setBranchOptions] = useState([BLANK_OPTION]);
+  const [doctorOptions, setDoctorOptions] = useState([BLANK_OPTION]);
   const [guarantorOptions, setGuarantorOptions] = useState([BLANK_OPTION]);
 
   const formRef = useRef<HTMLFormElement>(null);
-  const firstNameRef = useRef<HTMLInputElement>(null);
   const dobRef = useRef<CareaiDateFieldHandle>(null);
-  const treatmentRef = useRef<CareaiSelectHandle>(null);
   const idFileRef = useRef<HTMLInputElement>(null);
   const medFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [sources, docs, nations, locations, genders, treatments] =
-        await Promise.all([
-          fetchMasterDropdown(MASTER_DROPDOWN_MODES.source),
-          fetchMasterDropdown(
-            MASTER_DROPDOWN_MODES.documentType,
-            MASTER_LEAD_DOCUMENTS_FILTER,
-          ),
-          fetchMasterDropdown(MASTER_DROPDOWN_MODES.nationality),
-          fetchMasterDropdown(MASTER_DROPDOWN_MODES.patientLocation),
-          fetchMasterItems(MASTER_ITEM_TYPES.gender),
-          fetchMasterItems(MASTER_ITEM_TYPES.treatmentType),
-        ]);
+      const [
+        sources,
+        docs,
+        nations,
+        locations,
+        providers,
+        genders,
+        treatments,
+        payments,
+      ] = await Promise.all([
+        fetchMasterDropdown(MASTER_DROPDOWN_MODES.source),
+        fetchMasterDropdown(
+          MASTER_DROPDOWN_MODES.documentType,
+          MASTER_LEAD_DOCUMENTS_FILTER,
+        ),
+        fetchMasterDropdown(MASTER_DROPDOWN_MODES.nationality),
+        fetchMasterDropdown(MASTER_DROPDOWN_MODES.patientLocation),
+        fetchMasterDropdown(MASTER_DROPDOWN_MODES.provider),
+        fetchMasterItems(MASTER_ITEM_TYPES.gender),
+        fetchMasterItems(MASTER_ITEM_TYPES.treatmentType),
+        fetchMasterItems(MASTER_ITEM_TYPES.paymentMode),
+      ]);
       if (cancelled) return;
-      setSourceOptions(withBlank(sources));
+      setAgentSource(
+        sources.find((o) => o.label === LEAD_SOURCE_AGENT_LABEL)?.value ?? "",
+      );
       setDocTypeOptions(withBlank(docs));
       setNationalityOptions(withBlank(nations));
       setLocationOptions(withBlank(locations));
+      setProviderOptions(withBlank(providers));
       setGenderOptions(withBlank(genders));
       setTreatmentOptions(withBlank(treatments));
+      setPaymentOptions(withBlank(payments));
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const rows =
+        treatment ?
+          await fetchMasterItems(MASTER_ITEM_TYPES.department, treatment)
+        : [];
+      if (!cancelled) setDepartmentOptions(withBlank(rows));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [treatment]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [branches, doctors] =
+        provider ?
+          await Promise.all([
+            fetchMasterDropdown(MASTER_DROPDOWN_MODES.branch, provider),
+            fetchMasterDropdown(MASTER_DROPDOWN_MODES.doctor, provider),
+          ])
+        : [[], []];
+      if (cancelled) return;
+      setBranchOptions(withBlank(branches));
+      setDoctorOptions(withBlank(doctors));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [provider]);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,24 +215,40 @@ export function AgentCaseRegistrationContent() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const goToStep2 = () => {
-    const first = firstNameRef.current?.value?.trim() ?? "";
-    if (!first) {
-      setStepError(LEAD_MESSAGES.firstNameRequiredToContinue);
-      firstNameRef.current?.focus();
-      return;
-    }
-    goStep(2);
+  const readLead = (form: HTMLFormElement) => {
+    const lead = Object.fromEntries(
+      LEAD_FIELDS.map((field) => [field, formValue(form, field)]),
+    ) as LeadRegistrationPayload;
+    lead.Dob ||= dobRef.current?.value?.trim() ?? "";
+    lead.CallingCd = normalizeCallingCode(lead.CallingCd ?? "");
+    lead.LeadType ||= LEAD_TYPES.normal;
+    return lead;
   };
 
-  const goToStep3 = () => {
-    const treatment = treatmentRef.current?.value?.trim() ?? "";
-    if (!treatment) {
-      setStepError(LEAD_MESSAGES.treatmentTypeRequired);
-      treatmentRef.current?.focus();
-      return;
-    }
-    goStep(3);
+  /** Problems on the given steps, all at once; the wizard jumps to the first one's step. */
+  const problems = (form: HTMLFormElement, steps: readonly WizardStep[]) => {
+    const files = (input: HTMLInputElement | null) =>
+      Array.from(input?.files ?? []);
+    const found: LeadIssue[] = [
+      ...validateLead(readLead(form)),
+      ...validateUploads(files(idFileRef.current), 1),
+      ...validateUploads(files(medFileRef.current), 2),
+    ].filter((issue) => steps.includes(issue.step));
+    return found;
+  };
+
+  const review = (found: LeadIssue[]) => {
+    setIssues([...new Set(found.map((issue) => issue.message))]);
+    const first = found[0];
+    if (first) goStep(first.step);
+  };
+
+  const advance = (from: 1 | 2) => {
+    const form = formRef.current;
+    if (!form) return;
+    const found = problems(form, [from]);
+    if (found.length > 0) return review(found);
+    goStep((from + 1) as WizardStep);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -175,31 +256,13 @@ export function AgentCaseRegistrationContent() {
     const form = formRef.current;
     if (!form || submitting) return;
 
-    const firstName = formValue(form, "FirstName");
-    const treatmentType = formValue(form, "TreatmentType");
-    if (!firstName) {
-      goStep(1);
-      setStepError(LEAD_MESSAGES.firstNameRequired);
-      firstNameRef.current?.focus();
-      return;
-    }
-    if (!treatmentType) {
-      goStep(2);
-      setStepError(LEAD_MESSAGES.treatmentTypeRequired);
-      treatmentRef.current?.focus();
-      return;
-    }
+    const found = problems(form, [1, 2, 3]);
+    if (found.length > 0) return review(found);
 
     setSubmitting(true);
     setStepError(null);
     try {
-      const payload = Object.fromEntries(
-        LEAD_FIELDS.map((field) => [field, formValue(form, field)]),
-      ) as LeadRegistrationPayload;
-      payload.Dob ||= dobRef.current?.value?.trim() ?? "";
-      payload.CallingCd ||= DEFAULT_CALLING_CD;
-      payload.LeadType ||= LEAD_TYPES.normal;
-      const result = await registerLead(payload);
+      const result = await registerLead(readLead(form));
 
       const mem = result.member_Id || "";
       const tid = result.claim_No || "";
@@ -210,14 +273,23 @@ export function AgentCaseRegistrationContent() {
       const medFiles = medFileRef.current?.files ?? null;
       if (mem && tid && (idFile || (medFiles && medFiles.length > 0))) {
         try {
-          await uploadLeadDocuments({
+          const upload = await uploadLeadDocuments({
             claimNo: tid,
             memberId: mem,
             idDocument: idFile,
             medicalReports: medFiles,
           });
-        } catch {
-          setStepError(LEAD_MESSAGES.savedButUploadFailed);
+          setUploadResult({
+            uploaded: upload.uploaded ?? [],
+            errors: upload.errors ?? [],
+          });
+        } catch (err) {
+          setUploadResult({
+            uploaded: [],
+            errors: [
+              err instanceof Error ? err.message : LEAD_MESSAGES.uploadFailed,
+            ],
+          });
         }
       }
 
@@ -237,10 +309,13 @@ export function AgentCaseRegistrationContent() {
     setStep(1);
     setMemberId("");
     setClaimNo("");
+    setUploadResult(null);
     setIdFileLabel("No file chosen");
     setMedFileLabel(null);
     setStepError(null);
     setSubmitting(false);
+    setTreatment("");
+    setProvider("");
     setPaymentMode("");
     formRef.current?.reset();
   };
@@ -289,7 +364,13 @@ export function AgentCaseRegistrationContent() {
           </div>
         </div>
 
-        <form ref={formRef} className="lm-form-card" onSubmit={handleSubmit}>
+        <form
+          ref={formRef}
+          className="lm-form-card"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <input type="hidden" name="Source" value={agentSource} />
           {stepError ?
             <p className="lm-form-error" role="alert">
               {stepError}
@@ -318,25 +399,12 @@ export function AgentCaseRegistrationContent() {
               <div className="lm-step-pill">Step 1 of 3</div>
             </div>
 
-            {sourceOptions.length > 0 ?
-              <div className="lm-field">
-                <label>Lead Source</label>
-                <CareaiSelect
-                  name="Source"
-                  defaultValue=""
-                  placeholder="--Select--"
-                  options={sourceOptions}
-                />
-              </div>
-            : null}
-
             <div className="lm-grid2">
               <div className="lm-field">
                 <label>
                   First Name <span className="req">*</span>
                 </label>
                 <input
-                  ref={firstNameRef}
                   type="text"
                   name="FirstName"
                   placeholder="First Name"
@@ -365,10 +433,12 @@ export function AgentCaseRegistrationContent() {
               </div>
               <div className="lm-field">
                 <label>Date of Birth</label>
-                <CareaiDateField ref={dobRef} name="Dob" />
+                <CareaiDateField ref={dobRef} name="Dob" disableFuture />
               </div>
               <div className="lm-field">
-                <label>Gender</label>
+                <label>
+                  Gender <span className="req">*</span>
+                </label>
                 <CareaiSelect
                   name="Gender"
                   defaultValue=""
@@ -382,20 +452,38 @@ export function AgentCaseRegistrationContent() {
                   name="Nationality"
                   defaultValue=""
                   placeholder="--Select--"
+                  searchable
                   options={nationalityOptions}
                 />
               </div>
               <div className="lm-field">
-                <label>Contact Number</label>
+                <label>
+                  Contact Number <span className="req">*</span>
+                </label>
                 <div className="lm-grid2" style={{ gap: "0.5rem" }}>
                   <input
                     type="text"
                     name="CallingCd"
                     defaultValue={DEFAULT_CALLING_CD}
-                    placeholder="91"
+                    placeholder={DEFAULT_CALLING_CD}
                     aria-label="Calling code"
+                    onBlur={(event) => {
+                      event.target.value = normalizeCallingCode(
+                        event.target.value,
+                      );
+                    }}
                   />
-                  <input type="tel" name="MobileNo" placeholder="Phone" />
+                  <input
+                    type="tel"
+                    name="MobileNo"
+                    placeholder="Phone"
+                    inputMode="numeric"
+                    onInput={(event) => {
+                      event.currentTarget.value = event.currentTarget.value
+                        .replace(/\D/g, "")
+                        .slice(0, LEAD_PHONE_MAX_DIGITS);
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -433,16 +521,21 @@ export function AgentCaseRegistrationContent() {
 
             <div className="lm-grid2">
               <div className="lm-field">
-                <label>Patient Location</label>
+                <label>
+                  Patient Location <span className="req">*</span>
+                </label>
                 <CareaiSelect
                   name="PatientLocation"
                   defaultValue=""
                   placeholder="--Select--"
+                  searchable
                   options={locationOptions}
                 />
               </div>
               <div className="lm-field">
-                <label>Identification Document</label>
+                <label>
+                  Identification Document <span className="req">*</span>
+                </label>
                 <CareaiSelect
                   name="DocumentType"
                   defaultValue=""
@@ -451,7 +544,9 @@ export function AgentCaseRegistrationContent() {
                 />
               </div>
               <div className="lm-field">
-                <label>Document Number</label>
+                <label>
+                  Document Number <span className="req">*</span>
+                </label>
                 <input
                   type="text"
                   name="DocumentNo"
@@ -483,7 +578,7 @@ export function AgentCaseRegistrationContent() {
               <button
                 type="button"
                 className="lm-btn lm-btn-primary"
-                onClick={goToStep2}
+                onClick={() => advance(1)}
               >
                 Next{" "}
                 <svg
@@ -526,24 +621,21 @@ export function AgentCaseRegistrationContent() {
                   Treatment Type <span className="req">*</span>
                 </label>
                 <CareaiSelect
-                  ref={treatmentRef}
                   name="TreatmentType"
-                  required
                   defaultValue=""
                   placeholder="--Select--"
                   options={treatmentOptions}
+                  onChange={setTreatment}
                 />
               </div>
               <div className="lm-field">
                 <label>Department</label>
                 <CareaiSelect
+                  key={treatment}
                   name="Department"
                   defaultValue=""
                   placeholder="--Select--"
-                  options={careaiOptionsFromLabels(
-                    ["Inpatient", "Outpatient"],
-                    { label: "--Select--" },
-                  )}
+                  options={departmentOptions}
                 />
               </div>
               <div className="lm-field">
@@ -552,57 +644,49 @@ export function AgentCaseRegistrationContent() {
                   name="ProviderCd"
                   defaultValue=""
                   placeholder="--Select--"
-                  options={careaiOptionsFromLabels([], {
-                    label: "--Select--",
-                  })}
+                  options={providerOptions}
+                  onChange={setProvider}
+                  searchable
                 />
               </div>
               <div className="lm-field">
                 <label>Branch Location</label>
                 <CareaiSelect
+                  key={provider}
                   name="BranchCd"
                   defaultValue=""
                   placeholder="--Select--"
-                  options={careaiOptionsFromLabels([], {
-                    label: "--Select--",
-                  })}
+                  options={branchOptions}
                 />
               </div>
               <div className="lm-field">
                 <label>Preferred Doctor</label>
                 <CareaiSelect
+                  key={provider}
                   name="DoctorCd"
                   defaultValue=""
                   placeholder="--Select--"
-                  options={careaiOptionsFromLabels([], {
-                    label: "--Select--",
-                  })}
+                  options={doctorOptions}
                 />
               </div>
-              <div className="lm-field">
-                <label>ICD Code</label>
-                <input type="text" name="IcdCode" placeholder="ICD code" />
-              </div>
-              <div className="lm-field">
-                <label>ICD Description</label>
-                <input
-                  type="text"
-                  name="IcdDesc"
-                  placeholder="ICD description"
-                />
-              </div>
-              <div className="lm-field">
-                <label>CPT Code</label>
-                <input type="text" name="CptCode" placeholder="CPT code" />
-              </div>
-              <div className="lm-field">
-                <label>CPT Description</label>
-                <input
-                  type="text"
-                  name="CptDesc"
-                  placeholder="CPT description"
-                />
-              </div>
+              <CareaiCodeSearch
+                type={MASTER_CODE_TYPES.icd}
+                codeName="IcdCode"
+                codeLabel="ICD Code"
+                codePlaceholder="ICD code"
+                descName="IcdDesc"
+                descLabel="ICD Description"
+                descPlaceholder="ICD description"
+              />
+              <CareaiCodeSearch
+                type={MASTER_CODE_TYPES.cpt}
+                codeName="CptCode"
+                codeLabel="CPT Code"
+                codePlaceholder="CPT code"
+                descName="CptDesc"
+                descLabel="CPT Description"
+                descPlaceholder="CPT description"
+              />
             </div>
 
             <div className="lm-field">
@@ -669,7 +753,7 @@ export function AgentCaseRegistrationContent() {
               <button
                 type="button"
                 className="lm-btn lm-btn-primary"
-                onClick={goToStep3}
+                onClick={() => advance(2)}
               >
                 Next{" "}
                 <svg
@@ -716,13 +800,14 @@ export function AgentCaseRegistrationContent() {
                   name="PaymentMode"
                   defaultValue=""
                   placeholder="--Select--"
-                  options={PAYMENT_MODE_OPTIONS}
+                  options={paymentOptions}
                   onChange={(value) => setPaymentMode(value)}
                 />
               </div>
               <div className="lm-field">
                 <label>Payment Type</label>
                 <CareaiSelect
+                  key={paymentMode}
                   name="Guarantor"
                   defaultValue=""
                   placeholder="--Select--"
@@ -777,6 +862,30 @@ export function AgentCaseRegistrationContent() {
             <div className="lm-member-id">{claimNo || "—"}</div>
           </div>
         </div>
+        {uploadResult ?
+          <div className="lm-upload-result" role="status">
+            {uploadResult.uploaded.length > 0 ?
+              <div className="ok">
+                Documents uploaded:
+                <ul>
+                  {uploadResult.uploaded.map((name) => (
+                    <li key={name}>{name}</li>
+                  ))}
+                </ul>
+              </div>
+            : null}
+            {uploadResult.errors.length > 0 ?
+              <div className="bad">
+                Not uploaded:
+                <ul>
+                  {uploadResult.errors.map((message) => (
+                    <li key={message}>{message}</li>
+                  ))}
+                </ul>
+              </div>
+            : null}
+          </div>
+        : null}
         <p className="lm-success-note">Thank you for completing the form.</p>
         <button
           type="button"
@@ -786,6 +895,7 @@ export function AgentCaseRegistrationContent() {
           + Add New Request
         </button>
       </div>
+      <CareaiValidationDialog messages={issues} onClose={() => setIssues([])} />
     </div>
   );
 }

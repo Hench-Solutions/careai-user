@@ -49,7 +49,9 @@ async function fetchOptions(
   const query = new URLSearchParams(params);
   try {
     const rows = await apiGet<MasterRow[]>(`${url}?${query}`);
-    return rows.map((row) => ({ value: row.value, label: row.text }));
+    return rows
+      .filter((row) => row.text?.trim())
+      .map((row) => ({ value: row.value, label: row.text }));
   } catch {
     return [];
   }
@@ -65,8 +67,22 @@ export function fetchMasterDropdown(
   });
 }
 
-export function fetchMasterItems(itemType: string): Promise<MasterOption[]> {
+export function fetchMasterItems(
+  itemType: string,
+  filterId = "",
+): Promise<MasterOption[]> {
   return fetchOptions(BFF_ENDPOINTS.master.items, {
     [MASTER_QUERY.itemType]: itemType,
+    ...(filterId && { [MASTER_QUERY.filterId]: filterId }),
+  });
+}
+
+export function searchCodes(
+  type: string,
+  term: string,
+): Promise<MasterOption[]> {
+  return fetchOptions(BFF_ENDPOINTS.master.codeSearch, {
+    [MASTER_QUERY.codeType]: type,
+    [MASTER_QUERY.codeQuery]: term,
   });
 }
