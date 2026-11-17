@@ -5,6 +5,7 @@ export const ROUTES = {
     base: "/agent",
     dashboard: "/agent/dashboard",
     caseRegistration: "/agent/case-registration",
+    newRegistration: "/agent/case-registration/new",
     referralInvoice: "/agent/referral-invoice",
     caseStatus: "/agent/case-status",
     actionRequired: "/agent/action-required",

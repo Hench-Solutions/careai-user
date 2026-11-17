@@ -17,6 +17,9 @@ type CareaiCodeSearchProps = {
   descName: string;
   descLabel: string;
   descPlaceholder: string;
+  /** Code and description already stored for the case being edited. */
+  defaultCode?: string;
+  defaultDesc?: string;
 };
 
 /** A code box with a search popup: type related words, read the matches, pick one to fill code and description. */
@@ -28,9 +31,11 @@ export function CareaiCodeSearch({
   descName,
   descLabel,
   descPlaceholder,
+  defaultCode = "",
+  defaultDesc = "",
 }: CareaiCodeSearchProps) {
-  const [code, setCode] = useState("");
-  const [desc, setDesc] = useState("");
+  const [code, setCode] = useState(defaultCode);
+  const [desc, setDesc] = useState(defaultDesc);
   const [open, setOpen] = useState(false);
   const [term, setTerm] = useState("");
   const [results, setResults] = useState<MasterOption[] | null>(null);
@@ -51,14 +56,14 @@ export function CareaiCodeSearch({
     const form = rootRef.current?.closest("form");
     if (!form) return;
     const onReset = () => {
-      setCode("");
-      setDesc("");
+      setCode(defaultCode);
+      setDesc(defaultDesc);
       setResults(null);
       setOpen(false);
     };
     form.addEventListener("reset", onReset);
     return () => form.removeEventListener("reset", onReset);
-  }, []);
+  }, [defaultCode, defaultDesc]);
 
   const search = async (text: string) => {
     const query = text.trim();

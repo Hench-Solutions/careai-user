@@ -1,15 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 
 import type { CareaiDateFieldHandle } from "@/components/careai/careai-date-field";
 import type { LeadIssue } from "@/lib/lead/validate";
-import type { LeadRegistrationPayload, MasterOption } from "@/services/lead";
+import type {
+  LeadDetail,
+  LeadRegistrationPayload,
+  MasterOption,
+} from "@/services/lead";
 
 import { CareaiCodeSearch } from "@/components/careai/careai-code-search";
 import { CareaiDateField } from "@/components/careai/careai-date-field";
 import { CareaiSelect } from "@/components/careai/careai-select";
 import { CareaiValidationDialog } from "@/components/careai/careai-validation-dialog";
+import { ExistingDocuments } from "@/components/portal/agent-pages/ExistingDocuments";
 import {
   MASTER_CODE_TYPES,
   MASTER_DROPDOWN_MODES,
@@ -19,12 +25,14 @@ import {
 import {
   BLANK_OPTION,
   DEFAULT_CALLING_CD,
+  LEAD_DOCUMENT_CODES,
   LEAD_FIELDS,
   LEAD_MESSAGES,
   LEAD_PHONE_MAX_DIGITS,
   LEAD_SOURCE_AGENT_LABEL,
   LEAD_TYPES,
 } from "@/config/lead";
+import { ROUTES } from "@/config/routes";
 import { ApiError } from "@/lib/api/client";
 import {
   ID_FILE,
@@ -38,6 +46,7 @@ import {
   fetchMasterDropdown,
   fetchMasterItems,
   registerLead,
+  updateLead,
   uploadLeadDocuments,
 } from "@/services/lead";
 
@@ -66,8 +75,32 @@ function withBlank(options: MasterOption[]): MasterOption[] {
   return [BLANK_OPTION, ...options];
 }
 
-/** Agent case registration wizard (BFF → PortalLead/register). */
-export function AgentCaseRegistrationContent() {
+/** Keeps the value stored on a case in its list, even if the list no longer offers it. */
+function withCurrent(
+  options: MasterOption[],
+  value?: string,
+  label?: string,
+): MasterOption[] {
+  if (!value || options.some((o) => o.value === value)) return options;
+  return [...options, { value, label: label || value }];
+}
+
+/** The stored value of a dependent field, only while its parent is still the stored one. */
+function whenSame(
+  current: string,
+  original: string | undefined,
+  value: string | undefined,
+): string {
+  return original !== undefined && current === original ? (value ?? "") : "";
+}
+
+/** A list that shows the stored choice by name until the full list has loaded. */
+function seed(value?: string, label?: string): MasterOption[] {
+  return withBlank(withCurrent([], value, label));
+}
+
+/** Agent case registration wizard (BFF → PortalLead/register); with `lead` it edits that case (PortalLead/update). */
+export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
   const [step, setStep] = useState<WizardStep>(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [memberId, setMemberId] = useState("");
@@ -82,21 +115,43 @@ export function AgentCaseRegistrationContent() {
   const [issues, setIssues] = useState<string[]>([]);
   const [invalid, setInvalid] = useState<readonly string[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [treatment, setTreatment] = useState("");
-  const [provider, setProvider] = useState("");
-  const [paymentMode, setPaymentMode] = useState("");
+  const [treatment, setTreatment] = useState(lead?.treatmentType ?? "");
+  const [provider, setProvider] = useState(lead?.providerCd ?? "");
+  const [paymentMode, setPaymentMode] = useState(lead?.paymentMode ?? "");
   const [agentSource, setAgentSource] = useState("");
-  const [docTypeOptions, setDocTypeOptions] = useState([BLANK_OPTION]);
-  const [nationalityOptions, setNationalityOptions] = useState([BLANK_OPTION]);
-  const [locationOptions, setLocationOptions] = useState([BLANK_OPTION]);
-  const [genderOptions, setGenderOptions] = useState([BLANK_OPTION]);
-  const [treatmentOptions, setTreatmentOptions] = useState([BLANK_OPTION]);
-  const [providerOptions, setProviderOptions] = useState([BLANK_OPTION]);
-  const [paymentOptions, setPaymentOptions] = useState([BLANK_OPTION]);
-  const [departmentOptions, setDepartmentOptions] = useState([BLANK_OPTION]);
-  const [branchOptions, setBranchOptions] = useState([BLANK_OPTION]);
-  const [doctorOptions, setDoctorOptions] = useState([BLANK_OPTION]);
-  const [guarantorOptions, setGuarantorOptions] = useState([BLANK_OPTION]);
+  const [docTypeOptions, setDocTypeOptions] = useState(() =>
+    seed(lead?.documentType, lead?.documentTypeNm),
+  );
+  const [nationalityOptions, setNationalityOptions] = useState(() =>
+    seed(lead?.nationality, lead?.nationalityNm),
+  );
+  const [locationOptions, setLocationOptions] = useState(() =>
+    seed(lead?.patientLocation, lead?.patientLocationNm),
+  );
+  const [genderOptions, setGenderOptions] = useState(() =>
+    seed(lead?.gender, lead?.gender),
+  );
+  const [treatmentOptions, setTreatmentOptions] = useState(() =>
+    seed(lead?.treatmentType, lead?.treatmentTypeNm),
+  );
+  const [providerOptions, setProviderOptions] = useState(() =>
+    seed(lead?.providerCd, lead?.providerNm),
+  );
+  const [paymentOptions, setPaymentOptions] = useState(() =>
+    seed(lead?.paymentMode, lead?.paymentModeNm),
+  );
+  const [departmentOptions, setDepartmentOptions] = useState(() =>
+    seed(lead?.department, lead?.departmentNm),
+  );
+  const [branchOptions, setBranchOptions] = useState(() =>
+    seed(lead?.branchCd, lead?.branchNm),
+  );
+  const [doctorOptions, setDoctorOptions] = useState(() =>
+    seed(lead?.doctorCd, lead?.doctorNm),
+  );
+  const [guarantorOptions, setGuarantorOptions] = useState(() =>
+    seed(lead?.guarantor, lead?.guarantorNm),
+  );
 
   const formRef = useRef<HTMLFormElement>(null);
   const dobRef = useRef<CareaiDateFieldHandle>(null);
@@ -132,18 +187,42 @@ export function AgentCaseRegistrationContent() {
       setAgentSource(
         sources.find((o) => o.label === LEAD_SOURCE_AGENT_LABEL)?.value ?? "",
       );
-      setDocTypeOptions(withBlank(docs));
-      setNationalityOptions(withBlank(nations));
-      setLocationOptions(withBlank(locations));
-      setProviderOptions(withBlank(providers));
-      setGenderOptions(withBlank(genders));
-      setTreatmentOptions(withBlank(treatments));
-      setPaymentOptions(withBlank(payments));
+      setDocTypeOptions(
+        withBlank(withCurrent(docs, lead?.documentType, lead?.documentTypeNm)),
+      );
+      setNationalityOptions(
+        withBlank(withCurrent(nations, lead?.nationality, lead?.nationalityNm)),
+      );
+      setLocationOptions(
+        withBlank(
+          withCurrent(
+            locations,
+            lead?.patientLocation,
+            lead?.patientLocationNm,
+          ),
+        ),
+      );
+      setProviderOptions(
+        withBlank(withCurrent(providers, lead?.providerCd, lead?.providerNm)),
+      );
+      setGenderOptions(
+        withBlank(withCurrent(genders, lead?.gender, lead?.gender)),
+      );
+      setTreatmentOptions(
+        withBlank(
+          withCurrent(treatments, lead?.treatmentType, lead?.treatmentTypeNm),
+        ),
+      );
+      setPaymentOptions(
+        withBlank(
+          withCurrent(payments, lead?.paymentMode, lead?.paymentModeNm),
+        ),
+      );
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [lead]);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,12 +231,20 @@ export function AgentCaseRegistrationContent() {
         treatment ?
           await fetchMasterItems(MASTER_ITEM_TYPES.department, treatment)
         : [];
-      if (!cancelled) setDepartmentOptions(withBlank(rows));
+      if (!cancelled) {
+        setDepartmentOptions(
+          withBlank(
+            treatment === lead?.treatmentType ?
+              withCurrent(rows, lead.department, lead.departmentNm)
+            : rows,
+          ),
+        );
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [treatment]);
+  }, [treatment, lead]);
 
   useEffect(() => {
     let cancelled = false;
@@ -170,13 +257,24 @@ export function AgentCaseRegistrationContent() {
           ])
         : [[], []];
       if (cancelled) return;
-      setBranchOptions(withBlank(branches));
-      setDoctorOptions(withBlank(doctors));
+      const stored = provider === lead?.providerCd;
+      setBranchOptions(
+        withBlank(
+          stored ?
+            withCurrent(branches, lead.branchCd, lead.branchNm)
+          : branches,
+        ),
+      );
+      setDoctorOptions(
+        withBlank(
+          stored ? withCurrent(doctors, lead.doctorCd, lead.doctorNm) : doctors,
+        ),
+      );
     })();
     return () => {
       cancelled = true;
     };
-  }, [provider]);
+  }, [provider, lead]);
 
   useEffect(() => {
     let cancelled = false;
@@ -188,12 +286,20 @@ export function AgentCaseRegistrationContent() {
             paymentMode,
           )
         : [];
-      if (!cancelled) setGuarantorOptions(withBlank(rows));
+      if (!cancelled) {
+        setGuarantorOptions(
+          withBlank(
+            paymentMode === lead?.paymentMode ?
+              withCurrent(rows, lead.guarantor, lead.guarantorNm)
+            : rows,
+          ),
+        );
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [paymentMode]);
+  }, [paymentMode, lead]);
 
   const onIdFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -274,7 +380,10 @@ export function AgentCaseRegistrationContent() {
     setSubmitting(true);
     setStepError(null);
     try {
-      const result = await registerLead(readLead(form));
+      const result =
+        lead ?
+          await updateLead(lead.claimNo, readLead(form))
+        : await registerLead(readLead(form));
 
       const mem = result.member_Id || "";
       const tid = result.claim_No || "";
@@ -309,7 +418,9 @@ export function AgentCaseRegistrationContent() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       const message =
-        err instanceof ApiError ? err.message : LEAD_MESSAGES.submitFailed;
+        err instanceof ApiError ? err.message
+        : lead ? LEAD_MESSAGES.updateFailed
+        : LEAD_MESSAGES.submitFailed;
       setStepError(message);
     } finally {
       setSubmitting(false);
@@ -339,8 +450,12 @@ export function AgentCaseRegistrationContent() {
     <div className="lm-wizard">
       <div className={cn("lm-wizard-wrap", showSuccess && "done")}>
         <div className="lm-wiz-head">
-          <h1>TREATMENT REQUEST</h1>
-          <p>Submit your treatment request in 3 easy steps</p>
+          <h1>{lead ? "EDIT REQUEST" : "TREATMENT REQUEST"}</h1>
+          <p>
+            {lead ?
+              `Update ${lead.claimNo} in 3 easy steps`
+            : "Submit your treatment request in 3 easy steps"}
+          </p>
         </div>
 
         <div className="lm-steps-card">
@@ -424,33 +539,46 @@ export function AgentCaseRegistrationContent() {
                 <input
                   type="text"
                   name="FirstName"
+                  defaultValue={lead?.firstName}
                   placeholder="First Name"
                   required
                 />
               </div>
-              <div className="lm-field">
+              <div className={fieldClass("MiddleName")}>
                 <label>Middle Name</label>
                 <input
                   type="text"
                   name="MiddleName"
+                  defaultValue={lead?.middleName}
                   placeholder="Middle Name"
                 />
               </div>
-              <div className="lm-field">
+              <div className={fieldClass("LastName")}>
                 <label>Last Name</label>
-                <input type="text" name="LastName" placeholder="Last Name" />
+                <input
+                  type="text"
+                  name="LastName"
+                  defaultValue={lead?.lastName}
+                  placeholder="Last Name"
+                />
               </div>
               <div className={fieldClass("EmailId")}>
                 <label>Email Address</label>
                 <input
                   type="email"
                   name="EmailId"
+                  defaultValue={lead?.emailId}
                   placeholder="name@example.com"
                 />
               </div>
-              <div className="lm-field">
+              <div className={fieldClass("Dob")}>
                 <label>Date of Birth</label>
-                <CareaiDateField ref={dobRef} name="Dob" disableFuture />
+                <CareaiDateField
+                  ref={dobRef}
+                  name="Dob"
+                  defaultValue={lead?.dob}
+                  disableFuture
+                />
               </div>
               <div className={fieldClass("Gender")}>
                 <label>
@@ -459,7 +587,7 @@ export function AgentCaseRegistrationContent() {
                 <CareaiSelect
                   name="Gender"
                   onChange={() => clearInvalid("Gender")}
-                  defaultValue=""
+                  defaultValue={lead?.gender ?? ""}
                   placeholder="--Select--"
                   options={genderOptions}
                 />
@@ -468,7 +596,7 @@ export function AgentCaseRegistrationContent() {
                 <label>Nationality</label>
                 <CareaiSelect
                   name="Nationality"
-                  defaultValue=""
+                  defaultValue={lead?.nationality ?? ""}
                   placeholder="--Select--"
                   searchable
                   options={nationalityOptions}
@@ -482,7 +610,10 @@ export function AgentCaseRegistrationContent() {
                   <input
                     type="text"
                     name="CallingCd"
-                    defaultValue={DEFAULT_CALLING_CD}
+                    defaultValue={
+                      (lead && normalizeCallingCode(lead.callingCd)) ||
+                      DEFAULT_CALLING_CD
+                    }
                     placeholder={DEFAULT_CALLING_CD}
                     aria-label="Calling code"
                     onBlur={(event) => {
@@ -494,6 +625,7 @@ export function AgentCaseRegistrationContent() {
                   <input
                     type="tel"
                     name="MobileNo"
+                    defaultValue={lead?.mobileNo}
                     placeholder="Phone"
                     inputMode="numeric"
                     onInput={(event) => {
@@ -514,6 +646,7 @@ export function AgentCaseRegistrationContent() {
                     type="radio"
                     name="LeadType"
                     value={LEAD_TYPES.priority}
+                    defaultChecked={lead?.leadType === LEAD_TYPES.priority}
                   />{" "}
                   Priority
                 </label>
@@ -522,6 +655,7 @@ export function AgentCaseRegistrationContent() {
                     type="radio"
                     name="LeadType"
                     value={LEAD_TYPES.emergency}
+                    defaultChecked={lead?.leadType === LEAD_TYPES.emergency}
                   />{" "}
                   Emergency
                 </label>
@@ -530,7 +664,9 @@ export function AgentCaseRegistrationContent() {
                     type="radio"
                     name="LeadType"
                     value={LEAD_TYPES.normal}
-                    defaultChecked
+                    defaultChecked={
+                      !lead?.leadType || lead.leadType === LEAD_TYPES.normal
+                    }
                   />{" "}
                   Normal
                 </label>
@@ -545,7 +681,7 @@ export function AgentCaseRegistrationContent() {
                 <CareaiSelect
                   name="PatientLocation"
                   onChange={() => clearInvalid("PatientLocation")}
-                  defaultValue=""
+                  defaultValue={lead?.patientLocation ?? ""}
                   placeholder="--Select--"
                   searchable
                   options={locationOptions}
@@ -558,7 +694,7 @@ export function AgentCaseRegistrationContent() {
                 <CareaiSelect
                   name="DocumentType"
                   onChange={() => clearInvalid("DocumentType")}
-                  defaultValue=""
+                  defaultValue={lead?.documentType ?? ""}
                   placeholder="--Select--"
                   options={docTypeOptions}
                 />
@@ -570,6 +706,7 @@ export function AgentCaseRegistrationContent() {
                 <input
                   type="text"
                   name="DocumentNo"
+                  defaultValue={lead?.documentNo}
                   placeholder="Document number"
                 />
               </div>
@@ -594,6 +731,15 @@ export function AgentCaseRegistrationContent() {
                 <span className="lm-choose-btn">Choose File</span>
                 <span className="lm-file-name">{idFileLabel}</span>
               </label>
+              {lead ?
+                <ExistingDocuments
+                  claimNo={lead.claimNo}
+                  heading="Previously uploaded"
+                  documents={lead.documents.filter(
+                    (doc) => doc.docCd === LEAD_DOCUMENT_CODES.id,
+                  )}
+                />
+              : null}
             </div>
 
             <div className="lm-form-actions">
@@ -645,7 +791,7 @@ export function AgentCaseRegistrationContent() {
                 </label>
                 <CareaiSelect
                   name="TreatmentType"
-                  defaultValue=""
+                  defaultValue={lead?.treatmentType ?? ""}
                   placeholder="--Select--"
                   options={treatmentOptions}
                   onChange={(value) => {
@@ -659,7 +805,11 @@ export function AgentCaseRegistrationContent() {
                 <CareaiSelect
                   key={treatment}
                   name="Department"
-                  defaultValue=""
+                  defaultValue={whenSame(
+                    treatment,
+                    lead?.treatmentType,
+                    lead?.department,
+                  )}
                   placeholder="--Select--"
                   options={departmentOptions}
                 />
@@ -668,7 +818,7 @@ export function AgentCaseRegistrationContent() {
                 <label>Preferred Hospital</label>
                 <CareaiSelect
                   name="ProviderCd"
-                  defaultValue=""
+                  defaultValue={lead?.providerCd ?? ""}
                   placeholder="--Select--"
                   options={providerOptions}
                   onChange={setProvider}
@@ -680,7 +830,11 @@ export function AgentCaseRegistrationContent() {
                 <CareaiSelect
                   key={provider}
                   name="BranchCd"
-                  defaultValue=""
+                  defaultValue={whenSame(
+                    provider,
+                    lead?.providerCd,
+                    lead?.branchCd,
+                  )}
                   placeholder="--Select--"
                   options={branchOptions}
                 />
@@ -690,7 +844,11 @@ export function AgentCaseRegistrationContent() {
                 <CareaiSelect
                   key={provider}
                   name="DoctorCd"
-                  defaultValue=""
+                  defaultValue={whenSame(
+                    provider,
+                    lead?.providerCd,
+                    lead?.doctorCd,
+                  )}
                   placeholder="--Select--"
                   options={doctorOptions}
                 />
@@ -703,6 +861,8 @@ export function AgentCaseRegistrationContent() {
                 descName="IcdDesc"
                 descLabel="ICD Description"
                 descPlaceholder="Auto-filled from search"
+                defaultCode={lead?.icdCode}
+                defaultDesc={lead?.icdDesc}
               />
               <CareaiCodeSearch
                 type={MASTER_CODE_TYPES.cpt}
@@ -712,6 +872,8 @@ export function AgentCaseRegistrationContent() {
                 descName="CptDesc"
                 descLabel="CPT Description"
                 descPlaceholder="Auto-filled from search"
+                defaultCode={lead?.cptCode}
+                defaultDesc={lead?.cptDesc}
               />
             </div>
 
@@ -719,6 +881,7 @@ export function AgentCaseRegistrationContent() {
               <label>Diagnosis</label>
               <textarea
                 name="Diagnosis"
+                defaultValue={lead?.diagnosis}
                 placeholder="Enter diagnosis details..."
               />
             </div>
@@ -726,6 +889,7 @@ export function AgentCaseRegistrationContent() {
               <label>Treatment</label>
               <textarea
                 name="Treatment"
+                defaultValue={lead?.treatment}
                 placeholder="Enter treatment details..."
               />
             </div>
@@ -761,12 +925,22 @@ export function AgentCaseRegistrationContent() {
                 </div>
                 <div className="s">Supported PDF, DOC, JPG, PNG</div>
               </label>
+              {lead ?
+                <ExistingDocuments
+                  claimNo={lead.claimNo}
+                  heading="Previously uploaded"
+                  documents={lead.documents.filter(
+                    (doc) => doc.docCd === LEAD_DOCUMENT_CODES.medical,
+                  )}
+                />
+              : null}
             </div>
 
             <div className="lm-field">
               <label>Case Notes & Remarks</label>
               <textarea
                 name="CaseNote"
+                defaultValue={lead?.caseNote}
                 placeholder="Enter any special requirements, notes, or additional information..."
               />
             </div>
@@ -827,7 +1001,7 @@ export function AgentCaseRegistrationContent() {
                 </label>
                 <CareaiSelect
                   name="PaymentMode"
-                  defaultValue=""
+                  defaultValue={lead?.paymentMode ?? ""}
                   placeholder="--Select--"
                   options={paymentOptions}
                   onChange={(value) => {
@@ -841,7 +1015,11 @@ export function AgentCaseRegistrationContent() {
                 <CareaiSelect
                   key={paymentMode}
                   name="Guarantor"
-                  defaultValue=""
+                  defaultValue={whenSame(
+                    paymentMode,
+                    lead?.paymentMode,
+                    lead?.guarantor,
+                  )}
                   placeholder="--Select--"
                   options={guarantorOptions}
                 />
@@ -862,7 +1040,11 @@ export function AgentCaseRegistrationContent() {
                 className="lm-btn lm-btn-primary"
                 disabled={submitting}
               >
-                {submitting ? "Submitting…" : "Submit"}
+                {submitting ?
+                  "Saving…"
+                : lead ?
+                  "Save changes"
+                : "Submit"}
               </button>
             </div>
           </div>
@@ -876,7 +1058,11 @@ export function AgentCaseRegistrationContent() {
           </svg>
         </div>
         <h2>Success!</h2>
-        <p>Patient lead has been successfully submitted.</p>
+        <p>
+          {lead ?
+            "The registration has been updated."
+          : "Patient lead has been successfully submitted."}
+        </p>
         <div className="lm-member">
           <div className="lm-member-icon">
             <svg fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24">
@@ -919,13 +1105,29 @@ export function AgentCaseRegistrationContent() {
           </div>
         : null}
         <p className="lm-success-note">Thank you for completing the form.</p>
-        <button
-          type="button"
-          className="lm-btn lm-btn-primary"
-          onClick={resetWizard}
-        >
-          + Add New Request
-        </button>
+        <div className="lm-success-actions">
+          {lead ?
+            <Link
+              href={`${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}`}
+              className="lm-btn lm-btn-primary"
+            >
+              View registration
+            </Link>
+          : <button
+              type="button"
+              className="lm-btn lm-btn-primary"
+              onClick={resetWizard}
+            >
+              + Add New Request
+            </button>
+          }
+          <Link
+            href={ROUTES.agent.caseRegistration}
+            className="lm-btn lm-btn-ghost"
+          >
+            View all registrations
+          </Link>
+        </div>
       </div>
       <CareaiValidationDialog messages={issues} onClose={() => setIssues([])} />
     </div>

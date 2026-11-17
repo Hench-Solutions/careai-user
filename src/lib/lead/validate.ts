@@ -3,6 +3,7 @@ import type { LeadField } from "@/config/lead";
 import {
   LEAD_CALLING_CODE_PATTERN,
   LEAD_EMAIL_PATTERN,
+  LEAD_MAX_LENGTHS,
   LEAD_MESSAGES,
   LEAD_PHONE_MAX_DIGITS,
   LEAD_REQUIRED_FIELDS,
@@ -24,6 +25,24 @@ type LeadValues = Partial<Record<LeadField, string>>;
 
 const isBlank = (value: string | undefined) => !value?.trim();
 
+/** A real calendar date (yyyy-MM-dd) that is not in the future. */
+function isPastDate(iso: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return false;
+  const [year, month, day] = match.slice(1).map(Number) as [
+    number,
+    number,
+    number,
+  ];
+  const date = new Date(year, month - 1, day);
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day &&
+    date <= new Date()
+  );
+}
+
 /** "91", " +91 " and "+91" all become "+91"; anything without digits becomes "". */
 export function normalizeCallingCode(value: string): string {
   const digits = value.replace(/[^\d-]/g, "");
@@ -37,6 +56,19 @@ export function validateLead(values: LeadValues): LeadIssue[] {
     if (isBlank(values[field])) {
       issues.push({ step, field, message: LEAD_MESSAGES.required(label) });
     }
+  }
+  for (const { field, label, max } of LEAD_MAX_LENGTHS) {
+    if ((values[field]?.trim().length ?? 0) > max) {
+      issues.push({
+        step: 1,
+        field,
+        message: LEAD_MESSAGES.tooLong(label, max),
+      });
+    }
+  }
+  const dob = values.Dob?.trim();
+  if (dob && !isPastDate(dob)) {
+    issues.push({ step: 1, field: "Dob", message: LEAD_MESSAGES.dobInvalid });
   }
   const email = values.EmailId?.trim();
   if (email && !LEAD_EMAIL_PATTERN.test(email)) {
@@ -74,7 +106,11 @@ export function validateUploads(
   const issues: LeadIssue[] = [];
   for (const file of files) {
     const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-    if (!(LEAD_UPLOAD_EXTENSIONS as readonly string[]).includes(extension)) {
+    if (file.size === 0) {
+      issues.push({ step, field, message: LEAD_MESSAGES.fileEmpty(file.name) });
+    } else if (
+      !(LEAD_UPLOAD_EXTENSIONS as readonly string[]).includes(extension)
+    ) {
       issues.push({
         step,
         field,

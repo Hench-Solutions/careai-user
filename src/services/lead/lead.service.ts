@@ -17,6 +17,17 @@ export function registerLead(
   });
 }
 
+export function updateLead(
+  claimNo: string,
+  payload: LeadRegistrationPayload,
+): Promise<LeadRegistrationResult> {
+  return apiPost<LeadRegistrationResult>(
+    BFF_ENDPOINTS.lead.update,
+    { ...payload, ClaimNo: claimNo },
+    { failMessage: LEAD_MESSAGES.updateFailed },
+  );
+}
+
 export function uploadLeadDocuments(input: {
   claimNo: string;
   memberId: string;

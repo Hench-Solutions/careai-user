@@ -11,6 +11,11 @@ export const API_ENDPOINTS = {
   lead: {
     portalRegister: "/PortalLead/register",
     portalUploadDocuments: "/PortalLead/upload-documents",
+    portalUpdate: "/PortalLead/update",
+    portalSearch: "/PortalLead/search",
+    portalDocument: "/PortalLead/document",
+    portalLead: (claimNo: string) =>
+      `/PortalLead/${encodeURIComponent(claimNo)}`,
   },
   master: {
     items: "/Master/items",
@@ -28,6 +33,8 @@ export const BFF_ENDPOINTS = {
   lead: {
     register: "/api/lead/register",
     uploadDocuments: "/api/lead/upload-documents",
+    update: "/api/lead/update",
+    document: "/api/lead/document",
   },
   master: {
     dropdown: "/api/master/dropdown",
@@ -81,3 +88,8 @@ export const API_MESSAGES = {
   tooLarge: "The request was too large.",
   invalidMasterList: "That list is not available.",
 } as const;
+
+/** Link that opens one uploaded document of a case (served by this app's own route). */
+export function leadDocumentUrl(claimNo: string, fileName: string): string {
+  return `${BFF_ENDPOINTS.lead.document}?${new URLSearchParams({ claimNo, fileName })}`;
+}

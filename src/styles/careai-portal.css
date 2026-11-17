@@ -3750,3 +3750,163 @@ table.pg-table tr:last-child td {
     padding: 14px 12px;
   }
 }
+
+/* Case Registration list: search bar, list actions, detail cards */
+.careai-portal .mr-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.careai-portal .mr-search select,
+.careai-portal .mr-search input {
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  padding: 11px 14px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+}
+.careai-portal .mr-search input {
+  min-width: 220px;
+}
+.careai-portal .mr-search select:focus,
+.careai-portal .mr-search input:focus {
+  border-color: var(--purple);
+}
+.careai-portal .mr-actions {
+  display: flex;
+  gap: 16px;
+}
+.careai-portal a.rv-dl {
+  color: var(--purple);
+}
+.careai-portal a.rv-newbtn,
+.careai-portal a.lm-btn-primary {
+  color: #fff;
+}
+.careai-portal a.lm-btn-ghost {
+  color: #3f3b52;
+}
+.rv-badge.info {
+  background: color-mix(in oklab, var(--purple) 12%, #fff);
+  color: var(--purple);
+}
+.careai-portal .mr-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.careai-portal .mr-head-actions {
+  display: flex;
+  gap: 10px;
+}
+.careai-portal .mr-card {
+  margin-bottom: 18px;
+  padding: 22px 24px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+.careai-portal .mr-card h2 {
+  margin-bottom: 16px;
+  font-size: 15px;
+  font-weight: 800;
+}
+.careai-portal .mr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 16px 24px;
+}
+.careai-portal .mr-grid > div {
+  min-width: 0;
+}
+.careai-portal .mr-grid dt {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+}
+.careai-portal .mr-grid dd {
+  margin: 2px 0 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.careai-portal .mr-grid .mr-wide {
+  grid-column: 1 / -1;
+}
+@media (max-width: 640px) {
+  .careai-portal .mr-card {
+    padding: 18px 16px;
+  }
+  .careai-portal .mr-search input {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+/* Success screen: the action button sits centred under the text, not stretched or left-aligned */
+.careai-portal .lm-success .lm-btn {
+  display: inline-flex;
+  justify-content: center;
+}
+
+.careai-portal a.rv-patient {
+  display: block;
+}
+@media (max-width: 640px) {
+  .careai-portal .mr-opt {
+    display: none;
+  }
+  .careai-portal .mr-list table {
+    min-width: 0;
+  }
+  .careai-portal .mr-list th,
+  .careai-portal .mr-list td {
+    padding: 12px 10px;
+  }
+}
+
+/* Documents already uploaded for a case */
+.careai-portal .mr-existing {
+  margin-top: 10px;
+  font-size: 13.5px;
+}
+.careai-portal .mr-existing b {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--sub);
+}
+.careai-portal .mr-existing ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.careai-portal .mr-existing li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+}
+.careai-portal .mr-existing a {
+  color: var(--purple);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.careai-portal .mr-existing a:hover {
+  text-decoration: underline;
+}
+
+.careai-portal .lm-success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}

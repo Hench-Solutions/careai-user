@@ -42,7 +42,7 @@ export function getAgentNavSections(activeHref: string): PortalNavSection[] {
               <path d="M19 8v6M22 11h-6" />
             </svg>
           ),
-          active: activeHref === ROUTES.agent.caseRegistration,
+          active: activeHref.startsWith(ROUTES.agent.caseRegistration),
         },
         {
           href: ROUTES.agent.referralInvoice,

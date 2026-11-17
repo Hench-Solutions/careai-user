@@ -152,7 +152,7 @@ export function AgentDashboardContent({
               </div>
             </div>
             <div className="lm-qa-grid">
-              <Link href={ROUTES.agent.caseRegistration} className="lm-qa-card">
+              <Link href={ROUTES.agent.newRegistration} className="lm-qa-card">
                 <div className="lm-qa-icon">
                   <svg
                     fill="none"
@@ -165,7 +165,7 @@ export function AgentDashboardContent({
                     <path d="M19 8v6M22 11h-6" />
                   </svg>
                 </div>
-                <div className="lm-qa-text">Case Registration</div>
+                <div className="lm-qa-text">New Registration</div>
               </Link>
               <Link href={ROUTES.agent.referralInvoice} className="lm-qa-card">
                 <div className="lm-qa-icon">

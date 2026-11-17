@@ -1,18 +1,16 @@
 import type { NextRequest } from "next/server";
 
-import type { LeadField } from "@/config/lead";
 import type { LeadRegistrationResult } from "@/services/lead/lead.types";
 
 import { API_ENDPOINTS, API_MESSAGES } from "@/config/api";
-import { LEAD_FIELDS, LEAD_JSON_MAX_BYTES, LEAD_TYPES } from "@/config/lead";
-import { normalizeCallingCode, validateLead } from "@/lib/lead/validate";
+import { LEAD_JSON_MAX_BYTES } from "@/config/lead";
 import {
   jsonEnvelope,
   postToApiWithPortalToken,
   readJsonObjectLimited,
   rejectForeignOrigin,
-  stringField,
 } from "@/server/bff";
+import { leadPayloadFrom } from "@/server/lead-payload";
 
 export async function POST(request: NextRequest) {
   const blocked = rejectForeignOrigin(request);
@@ -21,12 +19,7 @@ export async function POST(request: NextRequest) {
   const body = await readJsonObjectLimited(request, LEAD_JSON_MAX_BYTES);
   if (!body) return jsonEnvelope(null, 400, API_MESSAGES.badRequest);
 
-  const payload = Object.fromEntries(
-    LEAD_FIELDS.map((field) => [field, stringField(body, field)]),
-  ) as Record<LeadField, string>;
-  payload.LeadType ||= LEAD_TYPES.normal;
-  payload.CallingCd = normalizeCallingCode(payload.CallingCd);
-  const [issue] = validateLead(payload);
+  const { payload, issue } = leadPayloadFrom(body);
   if (issue) return jsonEnvelope(null, 400, issue.message);
 
   const result = await postToApiWithPortalToken<LeadRegistrationResult>(

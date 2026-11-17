@@ -66,6 +66,19 @@ export const LEAD_REQUIRED_FIELDS = [
   step: 1 | 2 | 3;
 }[];
 
+/** Longest text the database accepts (the tighter of the member and lead tables), so a long entry is caught here and not by a database error. */
+export const LEAD_MAX_LENGTHS = [
+  { field: "FirstName", label: "First Name", max: 50 },
+  { field: "MiddleName", label: "Middle Name", max: 50 },
+  { field: "LastName", label: "Last Name", max: 50 },
+  { field: "EmailId", label: "Email Address", max: 50 },
+  { field: "DocumentNo", label: "ID Number", max: 50 },
+] as const satisfies readonly {
+  field: LeadField;
+  label: string;
+  max: number;
+}[];
+
 export const LEAD_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export const LEAD_CALLING_CODE_PATTERN = /^\+\d{1,4}(-\d{1,4})?$/;
 export const LEAD_PHONE_MAX_DIGITS = 10;
@@ -83,9 +96,26 @@ export const LEAD_UPLOAD_EXTENSIONS = [
   ".docx",
 ] as const;
 
+/** Status group (MT_CaseStatus.Status_Grp) of the registration stage: agents can edit a case only while it is in it. */
+export const LEAD_EDITABLE_STATUS_GROUP = "301";
+
+/** What the registrations list can be searched by; `value` is the API's `searchBy`. */
+export const LEAD_SEARCH_BY = [
+  { value: "Name", label: "Member Name" },
+  { value: "Email_Id", label: "Email Id" },
+  { value: "Member_Id", label: "Reference No." },
+] as const;
+
+/** Document types of the ID proof and medical reports that the registration form uploads (the API's defaults). */
+export const LEAD_DOCUMENT_CODES = { id: "303", medical: "316" } as const;
+
 export const LEAD_MESSAGES = {
   required: (label: string) => `${label} is required`,
   emailInvalid: "Email Address is not valid",
+  dobInvalid: "Date of Birth is not valid",
+  fileEmpty: (name: string) => `${name} is empty`,
+  tooLong: (label: string, max: number) =>
+    `${label} must be at most ${max} characters`,
   callingCodeInvalid: "Calling Code must look like +91",
   phoneInvalid: `Phone Number must be numbers only, up to ${LEAD_PHONE_MAX_DIGITS} digits`,
   fileTooLarge: (name: string) =>
@@ -94,6 +124,7 @@ export const LEAD_MESSAGES = {
     `${name} must be a ${LEAD_UPLOAD_EXTENSIONS.join(", ")} file`,
   claimAndMemberRequired: "Claim number and member ID are required.",
   submitFailed: "Could not submit the case. Please try again.",
+  updateFailed: "Could not save the changes. Please try again.",
   uploadFailed: "Could not upload documents.",
 } as const;
 

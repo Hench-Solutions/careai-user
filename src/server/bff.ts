@@ -200,6 +200,35 @@ export function postFormToApiWithPortalToken<T>(
   );
 }
 
+/** A file from the API (a document), passed through to the browser; a failure is a plain status. */
+export async function streamFromApiWithPortalToken(
+  request: NextRequest,
+  pathWithQuery: string,
+): Promise<Response> {
+  const token = request.cookies.get(PORTAL_TOKEN_COOKIE)?.value;
+  if (!token) return new Response(null, { status: 401 });
+  let res: Response;
+  try {
+    res = await fetch(`${apiBaseUrl()}${pathWithQuery}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+  } catch {
+    return new Response(null, { status: 502 });
+  }
+  if (!res.ok || !res.body) {
+    return new Response(null, { status: res.status === 404 ? 404 : 502 });
+  }
+  return new Response(res.body, {
+    headers: {
+      "Content-Type":
+        res.headers.get("content-type") ?? "application/octet-stream",
+      "Content-Disposition": "inline",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
 export async function readJsonObjectLimited(
   request: NextRequest,
   maxBytes: number,
