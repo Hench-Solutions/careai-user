@@ -1,27 +1,16 @@
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-import type { Metadata } from "next";
+import { ROUTES } from "@/config/routes";
 
-import { AgentCrumbTopbar } from "@/components/portal/agent-crumb-topbar";
-import { RegistrationView } from "@/components/portal/agent-pages/RegistrationView";
-
-export const metadata: Metadata = {
-  title: "Registration details",
-};
-
-export default function AgentRegistrationViewPage({
+/** Former read-only view; agents edit cases directly. */
+export default async function AgentRegistrationDetailPage({
   params,
 }: {
   params: Promise<{ claimNo: string }>;
 }) {
-  return (
-    <>
-      <AgentCrumbTopbar label="Case Registration" />
-      <div className="lm-content">
-        <Suspense fallback={<p className="lm-sub">Loading registration…</p>}>
-          <RegistrationView params={params} />
-        </Suspense>
-      </div>
-    </>
+  const { claimNo } = await params;
+  const decoded = decodeURIComponent(claimNo);
+  redirect(
+    `${ROUTES.agent.caseRegistration}/${encodeURIComponent(decoded)}/edit`,
   );
 }

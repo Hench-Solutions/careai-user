@@ -25,10 +25,10 @@ export async function RegistrationEdit({
           edited.
         </p>
         <Link
-          href={`${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}`}
+          href={ROUTES.agent.caseRegistration}
           className="lm-btn lm-btn-primary"
         >
-          View registration
+          Back to registrations
         </Link>
       </>
     );

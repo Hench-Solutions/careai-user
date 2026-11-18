@@ -74,13 +74,11 @@ export async function RegistrationList({
                 </td>
               </tr>
             : leads.map((lead) => {
-                const base = `${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}`;
+                const editHref = `${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}/edit`;
                 return (
                   <tr key={lead.claimNo}>
                     <td>
-                      <Link href={base} className="rv-patient">
-                        {lead.memberName}
-                      </Link>
+                      <div className="rv-patient">{lead.memberName}</div>
                       <div className="rv-id">{lead.memberId}</div>
                     </td>
                     <td className="mr-opt">{lead.claimNo}</td>
@@ -100,11 +98,8 @@ export async function RegistrationList({
                     </td>
                     <td>
                       <div className="mr-actions">
-                        <Link href={base} className="rv-dl">
-                          View
-                        </Link>
                         {lead.statusGrp === LEAD_EDITABLE_STATUS_GROUP ?
-                          <Link href={`${base}/edit`} className="rv-dl">
+                          <Link href={editHref} className="rv-dl">
                             Edit
                           </Link>
                         : null}

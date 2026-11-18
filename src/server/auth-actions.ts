@@ -48,13 +48,17 @@ export async function signInAction(
   if (!result.ok) return { type: "error", message: result.message };
 
   const { token, expires_At } = result.data;
-  const maxAge = Math.floor((Date.parse(expires_At) - Date.now()) / 1000);
   const role = roleForApiUserType(result.data.user_Type);
-  if (!token || !role || !(maxAge > 0)) {
+  if (
+    !token ||
+    !role ||
+    !Number.isFinite(Date.parse(expires_At)) ||
+    Date.parse(expires_At) <= Date.now()
+  ) {
     return { type: "error", message: API_MESSAGES.generic };
   }
 
-  await setPortalCookie(token, maxAge);
+  await setPortalCookie(token);
   redirect(
     safeNextPath(role, text(form, LOGIN_PARAMS.next)) ??
       dashboardPathForRole(role),

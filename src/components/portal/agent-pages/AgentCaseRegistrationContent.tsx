@@ -427,7 +427,7 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
     }
   };
 
-  const resetWizard = () => {
+  const resetWizard = useCallback(() => {
     setShowSuccess(false);
     setStep(1);
     setMemberId("");
@@ -438,11 +438,14 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
     setStepError(null);
     setInvalid([]);
     setSubmitting(false);
-    setTreatment("");
-    setProvider("");
-    setPaymentMode("");
+    setTreatment(lead?.treatmentType ?? "");
+    setProvider(lead?.providerCd ?? "");
+    setPaymentMode(lead?.paymentMode ?? "");
     formRef.current?.reset();
-  };
+  }, [lead]);
+
+  // Next keeps a page's state when you navigate away; its effects are cleaned up then, so start over here.
+  useEffect(() => resetWizard, [resetWizard]);
 
   const progress = `${(step / 3) * 100}%`;
 
@@ -1108,10 +1111,10 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
         <div className="lm-success-actions">
           {lead ?
             <Link
-              href={`${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}`}
+              href={`${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}/edit`}
               className="lm-btn lm-btn-primary"
             >
-              View registration
+              Continue editing
             </Link>
           : <button
               type="button"

@@ -18,11 +18,9 @@ const baseCookie = {
   path: "/",
 };
 
-export async function setPortalCookie(token: string, maxAgeSeconds: number) {
-  (await cookies()).set(PORTAL_TOKEN_COOKIE, token, {
-    ...baseCookie,
-    maxAge: maxAgeSeconds,
-  });
+/** Session cookie only (no maxAge): cleared when the browser session ends, not after idle timeout. */
+export async function setPortalCookie(token: string) {
+  (await cookies()).set(PORTAL_TOKEN_COOKIE, token, baseCookie);
 }
 
 export async function clearPortalCookie() {
