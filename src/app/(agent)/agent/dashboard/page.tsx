@@ -1,6 +1,9 @@
+import { Suspense } from "react";
+
 import type { Metadata } from "next";
 
-import { AgentDashboardView } from "@/components/portal/agent-dashboard-view";
+import { AgentDashboardData } from "@/components/portal/agent-dashboard-data";
+import { PortalPageSkeleton } from "@/components/portal/portal-loading-fallbacks";
 
 export const metadata: Metadata = {
   title: "Agent Dashboard",
@@ -8,5 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default function AgentDashboardPage() {
-  return <AgentDashboardView />;
+  return (
+    <Suspense fallback={<PortalPageSkeleton />}>
+      <AgentDashboardData />
+    </Suspense>
+  );
 }

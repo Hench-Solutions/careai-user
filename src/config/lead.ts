@@ -99,6 +99,21 @@ export const LEAD_UPLOAD_EXTENSIONS = [
 /** Status group (MT_CaseStatus.Status_Grp) of the registration stage: agents can edit a case only while it is in it. */
 export const LEAD_EDITABLE_STATUS_GROUP = "301";
 
+/** Status code (MT_CaseStatus.Status_Cd) from which a case counts as closed: "Claim Submitted". */
+export const LEAD_CLOSED_STATUS_CD = 329;
+
+/** The steps a case goes through, in order; `groups` are the MT_CaseStatus.Status_Grp values inside each step. */
+export const LEAD_STAGES = [
+  { label: "Registration", groups: ["301"] },
+  { label: "Estimate", groups: ["304"] },
+  { label: "Travel & Appointment", groups: ["318"] },
+  { label: "Treatment", groups: ["322"] },
+  { label: "Discharge & Claim", groups: ["324", "330"] },
+] as const;
+
+/** Group of statuses where the patient is receiving treatment (shown as "in treatment" on the dashboard). */
+export const LEAD_TREATMENT_STATUS_GROUP = "322";
+
 /** What the registrations list can be searched by; `value` is the API's `searchBy`. */
 export const LEAD_SEARCH_BY = [
   { value: "Name", label: "Member Name" },

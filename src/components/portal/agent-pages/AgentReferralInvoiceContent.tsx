@@ -17,7 +17,6 @@ import {
 import { useMockFeedback } from "@/hooks/use-mock-feedback";
 import { cn } from "@/lib/utils";
 
-/** Referral invoice tab (`.rv-tab`). */
 function portalRvTabClass(active: boolean, className?: string) {
   return cn(
     "cursor-pointer rounded-[10px] border-none bg-transparent px-[18px] py-[9px]",

@@ -1,7 +1,4 @@
 @layer components {
-  /**
- * Login page — ported from login/login1.html (scoped under .careai-login).
- */
   .careai-login {
     position: relative;
     display: flex;

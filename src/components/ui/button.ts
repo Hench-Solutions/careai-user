@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 
-/** Gradient primary label (links use :where(.careai-portal) a so utilities win). */
 export const portalPrimaryLinkText = cn(
   "text-white visited:text-white hover:text-white focus-visible:text-white",
 );
@@ -27,7 +26,6 @@ export function portalButtonClass(
   );
 }
 
-/** Gradient CTA used in list toolbars (`.rv-newbtn`). */
 export const portalToolbarNewLink = cn(
   "flex cursor-pointer items-center gap-2 rounded-xl border-none bg-care-grad px-5 py-3 text-[13.5px] font-bold shadow-portal-primary-btn",
   portalPrimaryLinkText,

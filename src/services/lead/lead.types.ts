@@ -25,9 +25,14 @@ export type LeadSummary = {
   source: string;
   treatmentType: string;
   caseManager: string;
+  statusCd: number;
   statusNm: string;
   statusGrp: string;
   crtdDt: string;
+  providerNm: string;
+  /** ISO timestamps (yyyy-MM-ddTHH:mm:ss, server time). */
+  crtdAt: string;
+  lstUpdtAt: string;
 };
 
 /** A registered case as the API returns it (`PortalLead/{claimNo}`): codes plus their names (`...Nm`). */

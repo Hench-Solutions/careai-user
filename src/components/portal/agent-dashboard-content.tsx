@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import type { AgentCaseStats } from "@/lib/lead/case-progress";
+
 import { portalPrimaryLinkText } from "@/components/ui/button";
 import { Panel, PanelIcon, PanelTitle } from "@/components/ui/panel";
 import {
@@ -11,13 +13,9 @@ import {
   portalH1,
   portalSub,
 } from "@/components/ui/typography";
-import {
-  careaiMockAgentDashboardActions,
-  careaiMockAgentDashboardStats,
-} from "@/config/careai-mock";
+import { careaiMockAgentDashboardActions } from "@/config/careai-mock";
 import { ROUTES } from "@/config/routes";
 import { useMockFeedback } from "@/hooks/use-mock-feedback";
-import { readCareaiMockStat } from "@/lib/careai/mock-stat";
 import { cn } from "@/lib/utils";
 
 import { AgentActionWidgetIcon } from "./agent-action-widget-icon";
@@ -52,6 +50,7 @@ const portalAgentDashboard = {
 
 type AgentDashboardContentProps = {
   searchQuery?: string;
+  stats: AgentCaseStats;
 };
 
 function remIconTone(tone: string): "amber" | "purple" | "green" {
@@ -62,19 +61,12 @@ function remIconTone(tone: string): "amber" | "purple" | "green" {
 
 export function AgentDashboardContent({
   searchQuery = "",
+  stats,
 }: AgentDashboardContentProps) {
   const router = useRouter();
   const { message, showFeedback } = useMockFeedback();
 
-  const totalCases = readCareaiMockStat(
-    careaiMockAgentDashboardStats.totalCases,
-  );
-  const activeCases = readCareaiMockStat(
-    careaiMockAgentDashboardStats.activeCases,
-  );
-  const closedCases = readCareaiMockStat(
-    careaiMockAgentDashboardStats.closedCases,
-  );
+  const { total: totalCases, active: activeCases, closed: closedCases } = stats;
 
   const actions = useMemo(() => {
     if (!searchQuery) return careaiMockAgentDashboardActions;

@@ -11,16 +11,7 @@ export const careaiMockAgent = {
   organization: "Prospera Global",
 } as const;
 
-type AgentCaseBadge = "Treatment Ongoing" | "Under Review";
-
 type AgentInvoiceStatus = "paid" | "pending" | "overdue";
-
-/** Portfolio KPIs: 24 total = 4 active (case status list) + 20 closed (historical). */
-export const careaiMockAgentDashboardStats = {
-  totalCases: { value: "24", badge: "↑ 3 new" },
-  activeCases: { value: "4", badge: "2 in treatment" },
-  closedCases: { value: "20", badge: "↑ 2 this month" },
-} as const;
 
 export const careaiMockAgentActionItems = [
   {
@@ -115,57 +106,6 @@ export const careaiMockAgentDashboardActions = careaiMockAgentActionItems.slice(
   0,
   3,
 );
-
-export const careaiMockAgentCases = [
-  {
-    id: "MEM261200412",
-    initials: "AH",
-    name: "Amir Hussain",
-    meta: "MEM261200412  Cardiology  Apollo Hospitals, Chennai",
-    badge: "Treatment Ongoing" as AgentCaseBadge,
-    badgeClass: "ongoing",
-    assignedTo: "Dr. Sharma",
-    updatedLabel: "2 hours ago",
-    closedOn: null as string | null,
-    trackerStage: 3,
-  },
-  {
-    id: "MEM261299871",
-    initials: "FS",
-    name: "Fatima Al Suwaidi",
-    meta: "MEM261299871  Orthopedics  Fortis, Mumbai",
-    badge: "Under Review" as AgentCaseBadge,
-    badgeClass: "review",
-    assignedTo: "Dr. Priya",
-    updatedLabel: "Yesterday",
-    closedOn: null,
-    trackerStage: 2,
-  },
-  {
-    id: "MEM261187720",
-    initials: "YK",
-    name: "Yusuf Karim",
-    meta: "MEM261187720  Neurology  Medanta, Gurugram",
-    badge: "Treatment Ongoing" as AgentCaseBadge,
-    badgeClass: "ongoing",
-    assignedTo: "Dr. Kapoor",
-    updatedLabel: "3 days ago",
-    closedOn: null,
-    trackerStage: 3,
-  },
-  {
-    id: "MEM261159841",
-    initials: "RM",
-    name: "Rohan Mehta",
-    meta: "MEM261159841  ADEM  Manipal, Bengaluru",
-    badge: "Under Review" as AgentCaseBadge,
-    badgeClass: "review",
-    assignedTo: "Dr. Priya",
-    updatedLabel: "4 days ago",
-    closedOn: null,
-    trackerStage: 1,
-  },
-] as const;
 
 export const careaiMockAgentInvoices = [
   {

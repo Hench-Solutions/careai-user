@@ -43,6 +43,10 @@ Open [http://localhost:3000](http://localhost:3000); it redirects to sign-in. Th
 - **API access.** The browser calls this app's own routes (`src/app/api/*`), which forward to the API with the cookie as a Bearer token. Paths, query names, limits and messages live in `src/config`.
 - **Sessions** last 60 minutes and are not refreshed; an expired session goes back to the login page.
 
+## API reference
+
+[docs/API.md](docs/API.md) shows which API each portal screen uses and why, for anyone integrating another client (such as the mobile app).
+
 ## Deploying
 
 - Serve over HTTPS: the cookie is `Secure` in production.

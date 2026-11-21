@@ -154,3 +154,21 @@ function PortalCardsSkeleton() {
     </div>
   );
 }
+
+/** Filter chips and a few case cards while the agent's cases load. */
+export function CaseStatusSkeleton() {
+  return (
+    <>
+      <div className="mb-[22px] flex flex-wrap gap-2" aria-hidden>
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} className="h-9 w-28 rounded-[20px]" />
+        ))}
+      </div>
+      <div className="flex flex-col gap-4" aria-hidden>
+        {Array.from({ length: 3 }, (_, i) => (
+          <Skeleton key={i} className="h-40 w-full rounded-[18px]" />
+        ))}
+      </div>
+    </>
+  );
+}

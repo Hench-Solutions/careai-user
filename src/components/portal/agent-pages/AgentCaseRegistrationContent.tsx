@@ -111,9 +111,6 @@ const portalWizard = {
   },
 } as const;
 
-/** Wizard submission success panel. */
-
-/** Primary button loading spinner. */
 const portalButtonSpinner = cn(
   "mr-1.5 inline-block size-[0.9em] animate-spin rounded-full border-2 align-[-0.15em]",
   "border-[color-mix(in_oklab,currentColor_25%,transparent)] border-t-current",

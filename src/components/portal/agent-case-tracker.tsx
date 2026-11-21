@@ -1,3 +1,4 @@
+import { LEAD_STAGES } from "@/config/lead";
 import { cn } from "@/lib/utils";
 
 const portalCaseTracker = {
@@ -19,7 +20,7 @@ const portalCaseTracker = {
 } as const;
 
 type AgentCaseTrackerProps = {
-  /** 1 = Registered, 4 = all stages complete (Closed). */
+  /** 1-based step in LEAD_STAGES. */
   currentStage: number;
 };
 
@@ -35,19 +36,13 @@ function stepState(
   stage: number,
   activeStage: number,
 ): "done" | "current" | "pending" {
-  if (activeStage >= 5) return "done";
   if (stage < activeStage) return "done";
   if (stage === activeStage) return "current";
   return "pending";
 }
 
 export function AgentCaseTracker({ currentStage }: AgentCaseTrackerProps) {
-  const labels = [
-    "Registered",
-    "Under Review",
-    "Treatment Ongoing",
-    "Closed",
-  ] as const;
+  const labels = LEAD_STAGES.map((stage) => stage.label);
 
   return (
     <>
