@@ -111,6 +111,9 @@ export const LEAD_STAGES = [
   { label: "Discharge & Claim", groups: ["324", "330"] },
 ] as const;
 
+/** Statuses in which our team is waiting for more information from the agent. */
+export const LEAD_INFO_REQUEST_STATUS_CDS = [302, 305, 310] as const;
+
 /** Group of statuses where the patient is receiving treatment (shown as "in treatment" on the dashboard). */
 export const LEAD_TREATMENT_STATUS_GROUP = "322";
 

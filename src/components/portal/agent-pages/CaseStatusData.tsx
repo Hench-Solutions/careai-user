@@ -2,8 +2,8 @@ import type { CaseStatusCard } from "@/components/portal/agent-pages/AgentCaseSt
 
 import { AgentCaseStatusContent } from "@/components/portal/agent-pages/AgentCaseStatusContent";
 import { LEAD_EDITABLE_STATUS_GROUP, LEAD_SEARCH_BY } from "@/config/lead";
-import { ROUTES } from "@/config/routes";
 import { isClosed, stageOf, updatedLabel } from "@/lib/lead/case-progress";
+import { caseEditHref } from "@/lib/lead/links";
 import { fetchAgentLeads } from "@/server/leads";
 
 const initialsOf = (name: string) =>
@@ -33,7 +33,7 @@ export async function CaseStatusData() {
       updatedLabel: updatedLabel(lead.lstUpdtAt, now),
       editHref:
         lead.statusGrp === LEAD_EDITABLE_STATUS_GROUP ?
-          `${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}/edit`
+          caseEditHref(lead.claimNo)
         : null,
     }));
   return <AgentCaseStatusContent cases={cards} />;

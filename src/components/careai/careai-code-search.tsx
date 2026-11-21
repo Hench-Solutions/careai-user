@@ -8,6 +8,7 @@ import type { MasterOption } from "@/services/lead";
 
 import { portalButtonClass } from "@/components/ui/button";
 import { DialogShell } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Field, FieldLabel, Input } from "@/components/ui/field";
 import { searchCodes } from "@/services/lead";
 
@@ -197,13 +198,17 @@ export function CareaiCodeSearch({
                   Searching…
                 </p>
               : results === null ?
-                <p className="py-7 text-center text-sm text-care-sub">
-                  Enter a code or related words to see matching options.
-                </p>
+                <EmptyState
+                  icon={Search}
+                  title="Search for a code"
+                  description="Enter a code or related words to see matching options."
+                />
               : results.length === 0 ?
-                <p className="py-7 text-center text-sm text-care-sub">
-                  No matches found. Try other words.
-                </p>
+                <EmptyState
+                  icon={Search}
+                  title="No matches found"
+                  description="Try other words."
+                />
               : <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr>

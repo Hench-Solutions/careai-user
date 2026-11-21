@@ -6,7 +6,7 @@ import { AgentCrumbTopbar } from "@/components/portal/agent-crumb-topbar";
 import { CaseStatusData } from "@/components/portal/agent-pages/CaseStatusData";
 import { PageHeader } from "@/components/portal/page-header";
 import { PortalContent } from "@/components/portal/portal-content";
-import { CaseStatusSkeleton } from "@/components/portal/portal-loading-fallbacks";
+import { CardListSkeleton } from "@/components/portal/portal-loading-fallbacks";
 import { LEAD_STAGES } from "@/config/lead";
 
 export const metadata: Metadata = {
@@ -22,7 +22,7 @@ export default function AgentCaseStatusPage() {
           title="Case Status"
           subtitle={`Track your open cases through ${LEAD_STAGES.map((stage) => stage.label).join(", ")}.`}
         />
-        <Suspense fallback={<CaseStatusSkeleton />}>
+        <Suspense fallback={<CardListSkeleton />}>
           <CaseStatusData />
         </Suspense>
       </PortalContent>

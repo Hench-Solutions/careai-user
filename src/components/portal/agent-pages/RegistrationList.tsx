@@ -1,14 +1,17 @@
 import Link from "next/link";
 
+import { FolderOpen, Search } from "lucide-react";
+
 import { CareaiSelect } from "@/components/careai/careai-select";
 import { ListToolbar, TableCard } from "@/components/portal/list-layout";
 import {
   portalButtonClass,
   portalToolbarNewLink,
 } from "@/components/ui/button";
-import { portalSub } from "@/components/ui/typography";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LEAD_EDITABLE_STATUS_GROUP, LEAD_SEARCH_BY } from "@/config/lead";
 import { ROUTES } from "@/config/routes";
+import { caseEditHref } from "@/lib/lead/links";
 import { cn } from "@/lib/utils";
 import { fetchAgentLeads } from "@/server/leads";
 
@@ -86,48 +89,52 @@ export async function RegistrationList({
         </Link>
       </ListToolbar>
 
-      <TableCard>
-        <table>
-          <thead>
-            <tr>
-              <th>Patient</th>
-              <th className="max-[640px]:hidden">Treatment ID</th>
-              <th className="max-[640px]:hidden">Category</th>
-              <th className="max-[640px]:hidden">Treatment</th>
-              <th className="max-[640px]:hidden">Registered</th>
-              <th>Status</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {leads.length === 0 ?
+      {leads.length === 0 ?
+        <EmptyState
+          variant="card"
+          icon={searchVal ? Search : FolderOpen}
+          title={
+            searchVal ?
+              "No registrations match your search"
+            : "No registrations yet"
+          }
+          description={
+            searchVal ?
+              "Check the spelling or try a different search type."
+            : "Register your first case and it will be listed here."
+          }
+          action={
+            searchVal ?
+              <Link
+                href={ROUTES.agent.caseRegistration}
+                className={portalButtonClass("ghost")}
+              >
+                Clear search
+              </Link>
+            : <Link
+                href={ROUTES.agent.newRegistration}
+                className={portalButtonClass("primary")}
+              >
+                + New Registration
+              </Link>
+          }
+        />
+      : <TableCard>
+          <table>
+            <thead>
               <tr>
-                <td colSpan={7}>
-                  <div className="flex flex-col items-start gap-3 py-2 pb-3">
-                    <p className={cn(portalSub, "mb-0")}>
-                      {searchVal ?
-                        "No registrations match your search."
-                      : "You have not registered any cases yet."}
-                    </p>
-                    {searchVal ?
-                      <Link
-                        href={ROUTES.agent.caseRegistration}
-                        className={portalButtonClass("ghost")}
-                      >
-                        Clear search
-                      </Link>
-                    : <Link
-                        href={ROUTES.agent.newRegistration}
-                        className={portalButtonClass("primary")}
-                      >
-                        + New Registration
-                      </Link>
-                    }
-                  </div>
-                </td>
+                <th>Patient</th>
+                <th className="max-[640px]:hidden">Treatment ID</th>
+                <th className="max-[640px]:hidden">Category</th>
+                <th className="max-[640px]:hidden">Treatment</th>
+                <th className="max-[640px]:hidden">Registered</th>
+                <th>Status</th>
+                <th />
               </tr>
-            : leads.map((lead) => {
-                const editHref = `${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}/edit`;
+            </thead>
+            <tbody>
+              {leads.map((lead) => {
+                const editHref = caseEditHref(lead.claimNo);
                 return (
                   <tr key={lead.claimNo}>
                     <td>
@@ -174,11 +181,11 @@ export async function RegistrationList({
                     </td>
                   </tr>
                 );
-              })
-            }
-          </tbody>
-        </table>
-      </TableCard>
+              })}
+            </tbody>
+          </table>
+        </TableCard>
+      }
     </>
   );
 }

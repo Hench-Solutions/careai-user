@@ -3,11 +3,14 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { FolderOpen, Search } from "lucide-react";
+
 import { AgentCaseTracker } from "@/components/portal/agent-case-tracker";
 import { portalButtonClass } from "@/components/ui/button";
 import { portalFilterChipClass } from "@/components/ui/chip";
-import { portalSub } from "@/components/ui/typography";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LEAD_STAGES } from "@/config/lead";
+import { ROUTES } from "@/config/routes";
 import { cn } from "@/lib/utils";
 
 /** One case as the Case Status page shows it (prepared on the server). */
@@ -71,11 +74,36 @@ export function AgentCaseStatusContent({
 
       <div className="flex flex-col gap-4">
         {cards.length === 0 ?
-          <p className={portalSub}>
-            {cases.length === 0 ?
-              "You have no open cases."
-            : "No cases match your filters."}
-          </p>
+          cases.length === 0 ?
+            <EmptyState
+              variant="card"
+              icon={FolderOpen}
+              title="No open cases"
+              description="Cases you register show up here until they are closed."
+              action={
+                <Link
+                  href={ROUTES.agent.newRegistration}
+                  className={portalButtonClass("primary")}
+                >
+                  New registration
+                </Link>
+              }
+            />
+          : <EmptyState
+              variant="card"
+              icon={Search}
+              title="No cases in this step"
+              action={
+                <button
+                  type="button"
+                  className={portalButtonClass("ghost")}
+                  onClick={() => setFilter(FILTERS[0])}
+                >
+                  Show all cases
+                </button>
+              }
+            />
+
         : cards.map((card) => (
             <div
               key={card.claimNo}

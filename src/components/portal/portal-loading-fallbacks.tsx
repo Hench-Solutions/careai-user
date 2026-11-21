@@ -156,7 +156,7 @@ function PortalCardsSkeleton() {
 }
 
 /** Filter chips and a few case cards while the agent's cases load. */
-export function CaseStatusSkeleton() {
+export function CardListSkeleton() {
   return (
     <>
       <div className="mb-[22px] flex flex-wrap gap-2" aria-hidden>

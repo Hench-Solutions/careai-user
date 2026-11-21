@@ -2,24 +2,20 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
+import { CheckCircle2, Search } from "lucide-react";
+
+import type { AgentAction } from "@/lib/lead/actions";
 import type { AgentCaseStats } from "@/lib/lead/case-progress";
 
 import { portalPrimaryLinkText } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Panel, PanelIcon, PanelTitle } from "@/components/ui/panel";
-import {
-  portalAgentEyebrow,
-  portalH1,
-  portalSub,
-} from "@/components/ui/typography";
-import { careaiMockAgentDashboardActions } from "@/config/careai-mock";
+import { portalAgentEyebrow, portalH1 } from "@/components/ui/typography";
 import { ROUTES } from "@/config/routes";
-import { useMockFeedback } from "@/hooks/use-mock-feedback";
 import { cn } from "@/lib/utils";
 
-import { AgentActionWidgetIcon } from "./agent-action-widget-icon";
-import { PortalMockBanner } from "./portal-mock-banner";
+import { AgentActionIcon } from "./agent-action-icon";
 
 const portalAgentDashboard = {
   statCard: (tone: "blue" | "purple" | "green") =>
@@ -48,34 +44,55 @@ const portalAgentDashboard = {
     ),
 } as const;
 
+/** A case the dashboard search can find. */
+export type DashboardCase = {
+  claimNo: string;
+  name: string;
+  memberId: string;
+  statusNm: string;
+  href: string;
+};
+
 type AgentDashboardContentProps = {
   searchQuery?: string;
   stats: AgentCaseStats;
+  actions: readonly AgentAction[];
+  cases: readonly DashboardCase[];
 };
 
-function remIconTone(tone: string): "amber" | "purple" | "green" {
-  if (tone === "amber") return "amber";
-  if (tone === "green") return "green";
-  return "purple";
-}
+const DASHBOARD_ACTIONS = 3;
+const DASHBOARD_CASE_MATCHES = 5;
 
 export function AgentDashboardContent({
   searchQuery = "",
   stats,
+  actions: allActions,
+  cases,
 }: AgentDashboardContentProps) {
-  const router = useRouter();
-  const { message, showFeedback } = useMockFeedback();
-
   const { total: totalCases, active: activeCases, closed: closedCases } = stats;
 
   const actions = useMemo(() => {
-    if (!searchQuery) return careaiMockAgentDashboardActions;
-    return careaiMockAgentDashboardActions.filter((item) => {
-      const haystack =
-        `${item.title} ${item.subtitle} ${item.priority}`.toLowerCase();
-      return haystack.includes(searchQuery);
-    });
-  }, [searchQuery]);
+    const matching =
+      searchQuery ?
+        allActions.filter((item) =>
+          `${item.title} ${item.subtitle} ${item.priority}`
+            .toLowerCase()
+            .includes(searchQuery),
+        )
+      : allActions;
+    return matching.slice(0, DASHBOARD_ACTIONS);
+  }, [allActions, searchQuery]);
+
+  const matchingCases = useMemo(() => {
+    if (!searchQuery) return [];
+    return cases
+      .filter((item) =>
+        `${item.name} ${item.claimNo} ${item.memberId} ${item.statusNm}`
+          .toLowerCase()
+          .includes(searchQuery),
+      )
+      .slice(0, DASHBOARD_CASE_MATCHES);
+  }, [cases, searchQuery]);
 
   const quickActionsVisible = useMemo(() => {
     if (!searchQuery) return true;
@@ -90,7 +107,6 @@ export function AgentDashboardContent({
 
   return (
     <div className="px-9 pt-8 pb-[60px] max-[900px]:overflow-x-clip max-[640px]:px-4 max-[640px]:pt-5 max-[640px]:pb-12">
-      <PortalMockBanner message={message} />
       <div className={portalAgentEyebrow}>
         <svg fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 2l1.7 6.6L20 10l-6.3 1.4L12 18l-1.7-6.6L4 10l6.3-1.4z" />
@@ -182,6 +198,39 @@ export function AgentDashboardContent({
           </div>
         </Link>
       </div>
+
+      {searchQuery ?
+        <Panel className="mb-5">
+          <PanelTitle className="mb-[14px]">Cases</PanelTitle>
+          {matchingCases.length === 0 ?
+            <EmptyState
+              compact
+              icon={Search}
+              title="No cases match your search"
+              description="Check the name, claim number or member ID and try again."
+            />
+          : <div className="flex flex-col gap-1">
+              {matchingCases.map((item) => (
+                <Link
+                  key={item.claimNo}
+                  href={item.href}
+                  className="flex items-center justify-between gap-3 rounded-xl px-2 py-2.5 hover:bg-[#f6f5fb]"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[13.5px] font-bold">{item.name}</div>
+                    <div className="text-xs text-care-sub">
+                      {item.claimNo} · {item.memberId}
+                    </div>
+                  </div>
+                  <span className="shrink-0 rounded-[20px] bg-[#f1e9fe] px-3 py-1 text-xs font-bold text-care-purple">
+                    {item.statusNm}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          }
+        </Panel>
+      : null}
 
       <div className="grid grid-cols-[1.5fr_1fr] gap-5 max-[1100px]:grid-cols-1 [&>*]:min-w-0">
         {quickActionsVisible ?
@@ -311,25 +360,30 @@ export function AgentDashboardContent({
           </div>
           <div className="flex flex-col gap-3.5">
             {actions.length === 0 ?
-              <p className={cn(portalSub, "mb-0")}>
-                No matching action items for your search.
-              </p>
+              searchQuery ?
+                <EmptyState
+                  icon={Search}
+                  title="No matching action items"
+                  description="Nothing waiting on you matches your search."
+                />
+              : <EmptyState
+                  icon={CheckCircle2}
+                  title="You're all caught up"
+                  description="Nothing is waiting on you right now."
+                />
+
             : actions.map((item) => (
-                <button
+                <Link
                   key={item.id}
-                  type="button"
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-xl border-none bg-transparent p-0 text-left font-[inherit] text-inherit hover:bg-[#f6f5fb]"
-                  onClick={() => {
-                    showFeedback(`Opening “${item.title}” (demo).`);
-                    router.push(ROUTES.agent.actionRequired);
-                  }}
+                  href={item.primary?.href ?? ROUTES.agent.actionRequired}
+                  className="flex w-full items-center gap-3 rounded-xl text-left hover:bg-[#f6f5fb]"
                 >
                   <div
                     className={portalAgentDashboard.remIcon(
-                      remIconTone(item.iconTone),
+                      item.priority === "High" ? "amber" : "purple",
                     )}
                   >
-                    <AgentActionWidgetIcon kind={item.widgetIcon} />
+                    <AgentActionIcon kind={item.kind} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-[13.5px] font-bold">{item.title}</div>
@@ -340,7 +394,7 @@ export function AgentDashboardContent({
                   <div className={portalAgentDashboard.remTime(item.priority)}>
                     {item.priority}
                   </div>
-                </button>
+                </Link>
               ))
             }
           </div>

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 
+import { FileText } from "lucide-react";
+
 import { ListToolbar } from "@/components/portal/list-layout";
 import { PageHeader } from "@/components/portal/page-header";
 import { PortalMockBanner } from "@/components/portal/portal-mock-banner";
@@ -9,7 +11,7 @@ import {
   portalPrimaryLinkText,
   portalToolbarNewLink,
 } from "@/components/ui/button";
-import { portalSub } from "@/components/ui/typography";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   careaiMockAgentInvoices,
   careaiMockAgentInvoiceStats,
@@ -151,7 +153,11 @@ export function AgentReferralInvoiceContent() {
             {rows.length === 0 ?
               <tr>
                 <td colSpan={8}>
-                  <span className={portalSub}>No invoices in this tab.</span>
+                  <EmptyState
+                    icon={FileText}
+                    title="No invoices in this tab"
+                    description="Invoices with this status will appear here."
+                  />
                 </td>
               </tr>
             : rows.map((row) => (

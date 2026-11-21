@@ -9,22 +9,24 @@ The CareAi .NET API calls behind each portal screen, with a sample request and r
 
 ## Screens and the API they use
 
-| Screen                   | API                                                                  | Purpose                                                                              |
-| ------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Sign in                  | `POST /Auth/portal-login`                                            | Log in as `AGENT` or `PATIENT`; returns the token                                    |
-| Any page                 | `GET /Auth/portal-me`                                                | Check the session is valid and get the user's name                                   |
-| Patient sign up          | `POST /Auth/patient-signup`                                          | Create a patient account                                                             |
-| Dashboard                | `GET /PortalLead/search`                                             | Get the agent's cases, then count total, active and closed (closed = `statusCd` 329) |
-| Case Status              | `GET /PortalLead/search`                                             | Get the agent's cases and show the open ones by step (see the last table)            |
-| Case Registration (list) | `GET /PortalLead/search?searchBy=&searchVal=`                        | List and search cases                                                                |
-| New registration         | `POST /PortalLead/register`                                          | Create the case                                                                      |
-|                          | `POST /PortalLead/upload-documents`                                  | Attach the ID document and medical reports                                           |
-| Edit registration        | `GET /PortalLead/{claimNo}`                                          | Load one case to fill the form                                                       |
-|                          | `POST /PortalLead/update`                                            | Save changes (only while the case is still at Registration)                          |
-|                          | `GET /PortalLead/document?claimNo=&fileName=`                        | Open an uploaded file                                                                |
-| Registration form lists  | `GET /PortalMaster/dropdown`, `/Master/items`, `/Master/code-search` | Fill the form's dropdowns and code search                                            |
+| Screen                   | API                                                                  | Purpose                                                                                                                                               |
+| ------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sign in                  | `POST /Auth/portal-login`                                            | Log in as `AGENT` or `PATIENT`; returns the token                                                                                                     |
+| Any page                 | `GET /Auth/portal-me`                                                | Check the session is valid and get the user's name                                                                                                    |
+| Patient sign up          | `POST /Auth/patient-signup`                                          | Create a patient account                                                                                                                              |
+| Dashboard                | `GET /PortalLead/search`                                             | Get the agent's cases, then count total, active and closed (closed = `statusCd` 329), list what needs action, and search them                         |
+| Case Status              | `GET /PortalLead/search`                                             | Get the agent's cases and show the open ones by step (see the last table)                                                                             |
+| Action Required          | `GET /PortalLead/search`                                             | Same list: a case needs action if a document code is missing from `documentCds` (ID = 303, medical report = 316) or its `statusCd` is 302, 305 or 310 |
+| Upload documents         | `GET /PortalLead/{claimNo}`, `POST /PortalLead/upload-documents`     | Add the missing ID document or medical reports to a case                                                                                              |
+| Case Registration (list) | `GET /PortalLead/search?searchBy=&searchVal=`                        | List and search cases                                                                                                                                 |
+| New registration         | `POST /PortalLead/register`                                          | Create the case                                                                                                                                       |
+|                          | `POST /PortalLead/upload-documents`                                  | Attach the ID document and medical reports                                                                                                            |
+| Edit registration        | `GET /PortalLead/{claimNo}`                                          | Load one case to fill the form                                                                                                                        |
+|                          | `POST /PortalLead/update`                                            | Save changes (only while the case is still at Registration)                                                                                           |
+|                          | `GET /PortalLead/document?claimNo=&fileName=`                        | Open an uploaded file                                                                                                                                 |
+| Registration form lists  | `GET /PortalMaster/dropdown`, `/Master/items`, `/Master/code-search` | Fill the form's dropdowns and code search                                                                                                             |
 
-Referral & Invoice, Action Required and the patient portal pages use demo data and call no API.
+Referral & Invoice and the patient portal pages use demo data and call no API.
 
 ## Sample requests and responses
 
@@ -82,7 +84,8 @@ Query: `searchBy` = `Name` | `Email_Id` | `Member_Id`, `searchVal` = text (empty
     "statusNm": "Registration",
     "statusGrp": "301",
     "crtdAt": "2026-11-16T13:11:51",
-    "lstUpdtAt": "2026-11-18T13:32:14"
+    "lstUpdtAt": "2026-11-18T13:32:14",
+    "documentCds": "303,316"
   }
 ]
 ```

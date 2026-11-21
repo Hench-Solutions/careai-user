@@ -33,6 +33,8 @@ export type LeadSummary = {
   /** ISO timestamps (yyyy-MM-ddTHH:mm:ss, server time). */
   crtdAt: string;
   lstUpdtAt: string;
+  /** Codes of the uploaded documents, comma-separated. */
+  documentCds: string;
 };
 
 /** A registered case as the API returns it (`PortalLead/{claimNo}`): codes plus their names (`...Nm`). */
