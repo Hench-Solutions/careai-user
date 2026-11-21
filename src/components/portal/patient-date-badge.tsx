@@ -27,7 +27,7 @@ export function PatientDateBadge() {
   const label = useSyncExternalStore(subscribe, getClientLabel, getServerLabel);
 
   return (
-    <div className="lm-date-badge">
+    <div className="flex items-center gap-2.5 rounded-[14px] border border-care-line bg-white px-[18px] py-3 text-sm font-bold whitespace-nowrap text-care-ink shadow-care [&_svg]:size-[17px] [&_svg]:shrink-0 [&_svg]:text-care-purple">
       <svg
         fill="none"
         stroke="currentColor"

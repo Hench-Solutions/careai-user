@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import type { CareaiDateFieldHandle } from "@/components/careai/careai-date-field";
 import type { LeadIssue } from "@/lib/lead/validate";
@@ -16,6 +17,23 @@ import { CareaiDateField } from "@/components/careai/careai-date-field";
 import { CareaiSelect } from "@/components/careai/careai-select";
 import { CareaiValidationDialog } from "@/components/careai/careai-validation-dialog";
 import { ExistingDocuments } from "@/components/portal/agent-pages/ExistingDocuments";
+import { PageBackLink } from "@/components/portal/page-back-link";
+import {
+  WizardFieldGrid,
+  WizardForm,
+  WizardHeader,
+  WizardStepRow,
+  WizardStepsCard,
+} from "@/components/portal/wizard-frame";
+import { portalButtonClass } from "@/components/ui/button";
+import {
+  DialogActions,
+  DialogButton,
+  DialogHeader,
+  DialogShell,
+} from "@/components/ui/dialog";
+import { Field, FieldLabel, Input, Textarea } from "@/components/ui/field";
+import { FileInput } from "@/components/ui/file-input";
 import {
   MASTER_CODE_TYPES,
   MASTER_DROPDOWN_MODES,
@@ -50,13 +68,59 @@ import {
   uploadLeadDocuments,
 } from "@/services/lead";
 
-type WizardStep = 1 | 2 | 3;
-
-function stepClass(current: WizardStep, step: WizardStep) {
-  if (step < current) return "lm-step done";
-  if (step === current) return "lm-step current";
-  return "lm-step";
+function wizardStepLabelClass(current: number, step: number) {
+  const { done, isCurrent } = wizardStepState(current, step);
+  return cn(
+    portalWizard.step.label,
+    (done || isCurrent) && portalWizard.step.labelActive,
+  );
 }
+
+function wizardStepCircleClass(current: number, step: number) {
+  const { done, isCurrent } = wizardStepState(current, step);
+  return cn(
+    portalWizard.step.circle,
+    done && portalWizard.step.circleDone,
+    isCurrent && portalWizard.step.circleCurrent,
+  );
+}
+
+function wizardStepLineClass(current: number, step: number) {
+  const { done } = wizardStepState(current, step);
+  return cn(portalWizard.step.line, done && portalWizard.step.lineDone);
+}
+
+function wizardStepState(current: number, step: number) {
+  return {
+    done: step < current,
+    isCurrent: step === current,
+  };
+}
+
+const portalWizard = {
+  step: {
+    root: "relative flex min-w-0 flex-1 flex-col items-center gap-2",
+    line: "absolute top-[19px] left-1/2 z-[1] h-0.5 w-full bg-[#eeebf6]",
+    lineDone: "bg-care-grad",
+    circle:
+      "z-[2] flex size-[38px] items-center justify-center rounded-full border-2 border-[#eeebf6] bg-[#eeebf6] text-sm font-extrabold text-care-nav-muted",
+    circleDone: "border-transparent bg-care-grad text-white",
+    circleCurrent: "border-care-purple bg-white text-care-purple",
+    label: "text-center text-[12.5px] font-bold text-care-nav-muted",
+    labelActive: "text-care-ink",
+  },
+} as const;
+
+/** Wizard submission success panel. */
+
+/** Primary button loading spinner. */
+const portalButtonSpinner = cn(
+  "mr-1.5 inline-block size-[0.9em] animate-spin rounded-full border-2 align-[-0.15em]",
+  "border-[color-mix(in_oklab,currentColor_25%,transparent)] border-t-current",
+  "motion-reduce:animate-none motion-reduce:border-t-[color-mix(in_oklab,currentColor_25%,transparent)]",
+);
+
+type WizardStep = 1 | 2 | 3;
 
 function formValue(form: HTMLFormElement, name: string): string {
   const el = form.elements.namedItem(name);
@@ -101,8 +165,12 @@ function seed(value?: string, label?: string): MasterOption[] {
 
 /** Agent case registration wizard (BFF → PortalLead/register); with `lead` it edits that case (PortalLead/update). */
 export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
+  const router = useRouter();
+  const leaveTitleId = useId();
   const [step, setStep] = useState<WizardStep>(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [memberId, setMemberId] = useState("");
   const [claimNo, setClaimNo] = useState("");
   const [uploadResult, setUploadResult] = useState<{
@@ -115,6 +183,8 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
   const [issues, setIssues] = useState<string[]>([]);
   const [invalid, setInvalid] = useState<readonly string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingDocs, setUploadingDocs] = useState(false);
+  const step2MastersLoaded = useRef(false);
   const [treatment, setTreatment] = useState(lead?.treatmentType ?? "");
   const [provider, setProvider] = useState(lead?.providerCd ?? "");
   const [paymentMode, setPaymentMode] = useState(lead?.paymentMode ?? "");
@@ -157,38 +227,92 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
   const dobRef = useRef<CareaiDateFieldHandle>(null);
   const idFileRef = useRef<HTMLInputElement>(null);
   const medFileRef = useRef<HTMLInputElement>(null);
+  const leaveDialogRef = useRef<HTMLDialogElement>(null);
+
+  const markDirty = useCallback(() => setDirty(true), []);
+
+  const leaveToRegistrations = useCallback(() => {
+    setShowLeaveConfirm(false);
+    router.push(ROUTES.agent.caseRegistration);
+  }, [router]);
+
+  const tryLeaveToRegistrations = useCallback(() => {
+    if (dirty && !showSuccess) {
+      setShowLeaveConfirm(true);
+      return;
+    }
+    leaveToRegistrations();
+  }, [dirty, leaveToRegistrations, showSuccess]);
+
+  useEffect(() => {
+    const dialog = leaveDialogRef.current;
+    if (!dialog) return;
+    if (showLeaveConfirm && !dialog.open) dialog.showModal();
+    if (!showLeaveConfirm && dialog.open) dialog.close();
+  }, [showLeaveConfirm]);
+
+  useEffect(() => {
+    if (!invalid.length) return;
+    const form = formRef.current;
+    if (!form) return;
+    const frame = requestAnimationFrame(() => {
+      const target = form.querySelector<HTMLElement>(
+        "[data-invalid] input:not([type='hidden']):not([type='file']), [data-invalid] textarea, [data-invalid] [data-slot='careai-select-trigger'], [data-invalid] [data-slot='careai-date-trigger'], [data-invalid] [data-slot='upload']",
+      );
+      target?.focus();
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [invalid, step]);
+
+  const applyStep2Masters = useCallback(
+    (treatments: MasterOption[], payments: MasterOption[]) => {
+      setTreatmentOptions(
+        withBlank(
+          withCurrent(treatments, lead?.treatmentType, lead?.treatmentTypeNm),
+        ),
+      );
+      setPaymentOptions(
+        withBlank(
+          withCurrent(payments, lead?.paymentMode, lead?.paymentModeNm),
+        ),
+      );
+    },
+    [lead],
+  );
+
+  const loadStep2Masters = useCallback(async () => {
+    if (step2MastersLoaded.current) return;
+    step2MastersLoaded.current = true;
+    const [treatments, payments] = await Promise.all([
+      fetchMasterItems(MASTER_ITEM_TYPES.treatmentType),
+      fetchMasterItems(MASTER_ITEM_TYPES.paymentMode),
+    ]);
+    applyStep2Masters(treatments, payments);
+  }, [applyStep2Masters]);
+
+  useEffect(() => {
+    step2MastersLoaded.current = false;
+  }, [lead]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [
-        sources,
-        docs,
-        nations,
-        locations,
-        providers,
-        genders,
-        treatments,
-        payments,
-      ] = await Promise.all([
-        fetchMasterDropdown(MASTER_DROPDOWN_MODES.source),
-        fetchMasterDropdown(
-          MASTER_DROPDOWN_MODES.documentType,
-          MASTER_LEAD_DOCUMENTS_FILTER,
-        ),
-        fetchMasterDropdown(MASTER_DROPDOWN_MODES.nationality),
-        fetchMasterDropdown(MASTER_DROPDOWN_MODES.patientLocation),
-        fetchMasterDropdown(MASTER_DROPDOWN_MODES.provider),
-        fetchMasterItems(MASTER_ITEM_TYPES.gender),
-        fetchMasterItems(MASTER_ITEM_TYPES.treatmentType),
-        fetchMasterItems(MASTER_ITEM_TYPES.paymentMode),
-      ]);
+      const [sources, nations, locations, providers, genders, docs] =
+        await Promise.all([
+          fetchMasterDropdown(MASTER_DROPDOWN_MODES.source),
+          fetchMasterDropdown(MASTER_DROPDOWN_MODES.nationality),
+          fetchMasterDropdown(MASTER_DROPDOWN_MODES.patientLocation),
+          fetchMasterDropdown(MASTER_DROPDOWN_MODES.provider),
+          fetchMasterItems(MASTER_ITEM_TYPES.gender),
+          fetchMasterDropdown(
+            MASTER_DROPDOWN_MODES.documentType,
+            MASTER_LEAD_DOCUMENTS_FILTER,
+          ),
+        ]);
       if (cancelled) return;
       setAgentSource(
         sources.find((o) => o.label === LEAD_SOURCE_AGENT_LABEL)?.value ?? "",
-      );
-      setDocTypeOptions(
-        withBlank(withCurrent(docs, lead?.documentType, lead?.documentTypeNm)),
       );
       setNationalityOptions(
         withBlank(withCurrent(nations, lead?.nationality, lead?.nationalityNm)),
@@ -208,21 +332,15 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
       setGenderOptions(
         withBlank(withCurrent(genders, lead?.gender, lead?.gender)),
       );
-      setTreatmentOptions(
-        withBlank(
-          withCurrent(treatments, lead?.treatmentType, lead?.treatmentTypeNm),
-        ),
+      setDocTypeOptions(
+        withBlank(withCurrent(docs, lead?.documentType, lead?.documentTypeNm)),
       );
-      setPaymentOptions(
-        withBlank(
-          withCurrent(payments, lead?.paymentMode, lead?.paymentModeNm),
-        ),
-      );
+      if (lead) void loadStep2Masters();
     })();
     return () => {
       cancelled = true;
     };
-  }, [lead]);
+  }, [lead, loadStep2Masters]);
 
   useEffect(() => {
     let cancelled = false;
@@ -302,11 +420,13 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
   }, [paymentMode, lead]);
 
   const onIdFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    markDirty();
     const file = event.target.files?.[0];
     setIdFileLabel(file?.name ?? "No file chosen");
   };
 
   const onMedFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    markDirty();
     const files = event.target.files;
     if (!files?.length) {
       setMedFileLabel(null);
@@ -323,8 +443,8 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
       current.includes(field) ? current.filter((f) => f !== field) : current,
     );
 
-  const fieldClass = (...fields: string[]) =>
-    cn("lm-field", fields.some((f) => invalid.includes(f)) && "has-error");
+  const isInvalid = (...fields: string[]) =>
+    fields.some((f) => invalid.includes(f));
 
   const goStep = useCallback((n: WizardStep) => {
     setStepError(null);
@@ -366,6 +486,7 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
     if (!form) return;
     const found = problems(form, [from]);
     if (found.length > 0) return review(found);
+    if (from === 1) void loadStep2Masters();
     goStep((from + 1) as WizardStep);
   };
 
@@ -393,6 +514,7 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
       const idFile = idFileRef.current?.files?.[0] ?? null;
       const medFiles = medFileRef.current?.files ?? null;
       if (mem && tid && (idFile || (medFiles && medFiles.length > 0))) {
+        setUploadingDocs(true);
         try {
           const upload = await uploadLeadDocuments({
             claimNo: tid,
@@ -411,9 +533,12 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
               err instanceof Error ? err.message : LEAD_MESSAGES.uploadFailed,
             ],
           });
+        } finally {
+          setUploadingDocs(false);
         }
       }
 
+      setDirty(false);
       setShowSuccess(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -438,6 +563,8 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
     setStepError(null);
     setInvalid([]);
     setSubmitting(false);
+    setUploadingDocs(false);
+    setDirty(false);
     setTreatment(lead?.treatmentType ?? "");
     setProvider(lead?.providerCd ?? "");
     setPaymentMode(lead?.paymentMode ?? "");
@@ -450,56 +577,76 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
   const progress = `${(step / 3) * 100}%`;
 
   return (
-    <div className="lm-wizard">
-      <div className={cn("lm-wizard-wrap", showSuccess && "done")}>
-        <div className="lm-wiz-head">
-          <h1>{lead ? "EDIT REQUEST" : "TREATMENT REQUEST"}</h1>
-          <p>
+    <div className="w-full max-w-[760px]">
+      <div
+        className={cn(
+          "w-full",
+          showSuccess &&
+            cn(
+              "done",
+              "[&_[data-wizard-part=form]]:hidden [&_[data-wizard-part=head]]:hidden [&_[data-wizard-part=steps]]:hidden",
+            ),
+        )}
+      >
+        <WizardHeader data-wizard-part="head">
+          <PageBackLink
+            variant="wizard"
+            label="Back to registrations"
+            onClick={tryLeaveToRegistrations}
+          />
+          <h1 className="text-2xl font-extrabold tracking-[0.2px]">
+            {lead ? "EDIT REQUEST" : "TREATMENT REQUEST"}
+          </h1>
+          <p className="mt-[5px] text-[13.5px] opacity-[0.88]">
             {lead ?
               `Update ${lead.claimNo} in 3 easy steps`
             : "Submit your treatment request in 3 easy steps"}
           </p>
-        </div>
+        </WizardHeader>
 
-        <div className="lm-steps-card">
-          <div className="lm-steps">
-            <div className={stepClass(step, 1)}>
-              <div className="lm-step-line" />
-              <div className="lm-step-circle">1</div>
-              <div className="lm-step-label">
+        <WizardStepsCard data-wizard-part="steps">
+          <WizardStepRow>
+            <div className={portalWizard.step.root}>
+              <div className={wizardStepLineClass(step, 1)} />
+              <div className={wizardStepCircleClass(step, 1)}>1</div>
+              <div className={wizardStepLabelClass(step, 1)}>
                 Customer
                 <br />
                 Information
               </div>
             </div>
-            <div className={stepClass(step, 2)}>
-              <div className="lm-step-line" />
-              <div className="lm-step-circle">2</div>
-              <div className="lm-step-label">
+            <div className={portalWizard.step.root}>
+              <div className={wizardStepLineClass(step, 2)} />
+              <div className={wizardStepCircleClass(step, 2)}>2</div>
+              <div className={wizardStepLabelClass(step, 2)}>
                 Medical
                 <br />
                 Information
               </div>
             </div>
-            <div className={stepClass(step, 3)}>
-              <div className="lm-step-circle">3</div>
-              <div className="lm-step-label">
+            <div className={portalWizard.step.root}>
+              <div className={wizardStepCircleClass(step, 3)}>3</div>
+              <div className={wizardStepLabelClass(step, 3)}>
                 Payee
                 <br />
                 Information
               </div>
             </div>
+          </WizardStepRow>
+          <div className="mt-[22px] h-[5px] overflow-hidden rounded-[20px] bg-[#eeebf6]">
+            <div
+              className="h-full rounded-[20px] bg-care-grad transition-[width] duration-300 ease-in-out motion-reduce:transition-none"
+              style={{ width: progress }}
+            />
           </div>
-          <div className="lm-progress">
-            <div className="lm-progress-bar" style={{ width: progress }} />
-          </div>
-        </div>
+        </WizardStepsCard>
 
-        <form
+        <WizardForm
           ref={formRef}
-          className="lm-form-card"
+          data-wizard-part="form"
           onSubmit={handleSubmit}
           onInput={(event) => {
+            markDirty();
             const { name } = event.target as HTMLInputElement;
             if (name) clearInvalid(name);
           }}
@@ -507,7 +654,10 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
         >
           <input type="hidden" name="Source" value={agentSource} />
           {stepError ?
-            <p className="lm-form-error" role="alert">
+            <p
+              className="mb-4 rounded-[10px] bg-[#fde8e8] px-3.5 py-2.5 text-[13px] font-semibold text-care-red"
+              role="alert"
+            >
               {stepError}
             </p>
           : null}
@@ -515,9 +665,9 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
             className={step === 1 ? "active" : undefined}
             hidden={step !== 1}
           >
-            <div className="lm-form-head">
-              <div className="lm-form-head-left">
-                <div className="lm-form-icon">
+            <div className="mb-[22px] flex items-center justify-between border-b border-care-line pb-[18px]">
+              <div className="flex items-center gap-3">
+                <div className="flex size-[42px] items-center justify-center rounded-xl bg-[#f1e9fe] [&_svg]:size-[21px] [&_svg]:text-care-purple">
                   <svg
                     fill="none"
                     stroke="currentColor"
@@ -529,88 +679,99 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                     <path d="M8 17c0-2 2-3 4-3s4 1 4 3" />
                   </svg>
                 </div>
-                <div className="lm-form-title">Customer Information</div>
+                <div className="text-lg font-extrabold">
+                  Customer Information
+                </div>
               </div>
-              <div className="lm-step-pill">Step 1 of 3</div>
+              <div className="rounded-[20px] bg-[#f1e9fe] px-[13px] py-1.5 text-xs font-bold text-care-purple">
+                Step 1 of 3
+              </div>
             </div>
 
-            <div className="lm-grid2">
-              <div className={fieldClass("FirstName")}>
-                <label>
+            <WizardFieldGrid>
+              <Field invalid={isInvalid("FirstName")}>
+                <FieldLabel>
                   First Name <span className="req">*</span>
-                </label>
-                <input
+                </FieldLabel>
+                <Input
                   type="text"
                   name="FirstName"
                   defaultValue={lead?.firstName}
                   placeholder="First Name"
                   required
                 />
-              </div>
-              <div className={fieldClass("MiddleName")}>
-                <label>Middle Name</label>
-                <input
+              </Field>
+              <Field invalid={isInvalid("MiddleName")}>
+                <FieldLabel>Middle Name</FieldLabel>
+                <Input
                   type="text"
                   name="MiddleName"
                   defaultValue={lead?.middleName}
                   placeholder="Middle Name"
                 />
-              </div>
-              <div className={fieldClass("LastName")}>
-                <label>Last Name</label>
-                <input
+              </Field>
+              <Field invalid={isInvalid("LastName")}>
+                <FieldLabel>Last Name</FieldLabel>
+                <Input
                   type="text"
                   name="LastName"
                   defaultValue={lead?.lastName}
                   placeholder="Last Name"
                 />
-              </div>
-              <div className={fieldClass("EmailId")}>
-                <label>Email Address</label>
-                <input
+              </Field>
+              <Field invalid={isInvalid("EmailId")}>
+                <FieldLabel>Email Address</FieldLabel>
+                <Input
                   type="email"
                   name="EmailId"
                   defaultValue={lead?.emailId}
                   placeholder="name@example.com"
                 />
-              </div>
-              <div className={fieldClass("Dob")}>
-                <label>Date of Birth</label>
+              </Field>
+              <Field invalid={isInvalid("Dob")}>
+                <FieldLabel>Date of Birth</FieldLabel>
                 <CareaiDateField
                   ref={dobRef}
                   name="Dob"
                   defaultValue={lead?.dob}
                   disableFuture
+                  onChange={() => markDirty()}
                 />
-              </div>
-              <div className={fieldClass("Gender")}>
-                <label>
+              </Field>
+              <Field invalid={isInvalid("Gender")}>
+                <FieldLabel>
                   Gender <span className="req">*</span>
-                </label>
+                </FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   name="Gender"
-                  onChange={() => clearInvalid("Gender")}
+                  onChange={() => {
+                    markDirty();
+                    clearInvalid("Gender");
+                  }}
                   defaultValue={lead?.gender ?? ""}
                   placeholder="--Select--"
                   options={genderOptions}
                 />
-              </div>
-              <div className="lm-field">
-                <label>Nationality</label>
+              </Field>
+              <Field>
+                <FieldLabel>Nationality</FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   name="Nationality"
                   defaultValue={lead?.nationality ?? ""}
                   placeholder="--Select--"
                   searchable
                   options={nationalityOptions}
+                  onChange={() => markDirty()}
                 />
-              </div>
-              <div className={fieldClass("CallingCd", "MobileNo")}>
-                <label>
+              </Field>
+              <Field invalid={isInvalid("CallingCd", "MobileNo")}>
+                <FieldLabel>
                   Contact Number <span className="req">*</span>
-                </label>
-                <div className="lm-phone-row">
-                  <input
+                </FieldLabel>
+                <div className="grid grid-cols-[minmax(64px,88px)_minmax(0,1fr)] gap-2">
+                  <Input
                     type="text"
                     name="CallingCd"
                     defaultValue={
@@ -625,7 +786,7 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                       );
                     }}
                   />
-                  <input
+                  <Input
                     type="tel"
                     name="MobileNo"
                     defaultValue={lead?.mobileNo}
@@ -638,13 +799,13 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                     }}
                   />
                 </div>
-              </div>
-            </div>
+              </Field>
+            </WizardFieldGrid>
 
-            <div className="lm-field">
-              <label>Select Category</label>
-              <div className="lm-radio-row">
-                <label className="lm-radio">
+            <Field>
+              <FieldLabel>Select Category</FieldLabel>
+              <div className="flex gap-[22px] pt-1 max-[640px]:flex-wrap max-[640px]:gap-x-[18px] max-[640px]:gap-y-2.5">
+                <label className="flex cursor-pointer items-center gap-[7px] text-[13.5px] font-semibold text-care-nav-ink">
                   <input
                     type="radio"
                     name="LeadType"
@@ -653,7 +814,7 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   />{" "}
                   Priority
                 </label>
-                <label className="lm-radio">
+                <label className="flex cursor-pointer items-center gap-[7px] text-[13.5px] font-semibold text-care-nav-ink">
                   <input
                     type="radio"
                     name="LeadType"
@@ -662,7 +823,7 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   />{" "}
                   Emergency
                 </label>
-                <label className="lm-radio">
+                <label className="flex cursor-pointer items-center gap-[7px] text-[13.5px] font-semibold text-care-nav-ink">
                   <input
                     type="radio"
                     name="LeadType"
@@ -674,65 +835,82 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   Normal
                 </label>
               </div>
-            </div>
+            </Field>
 
-            <div className="lm-grid2">
-              <div className={fieldClass("PatientLocation")}>
-                <label>
+            <WizardFieldGrid>
+              <Field invalid={isInvalid("PatientLocation")}>
+                <FieldLabel>
                   Patient Location <span className="req">*</span>
-                </label>
+                </FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   name="PatientLocation"
-                  onChange={() => clearInvalid("PatientLocation")}
+                  onChange={() => {
+                    markDirty();
+                    clearInvalid("PatientLocation");
+                  }}
                   defaultValue={lead?.patientLocation ?? ""}
                   placeholder="--Select--"
                   searchable
                   options={locationOptions}
                 />
-              </div>
-              <div className={fieldClass("DocumentType")}>
-                <label>
+              </Field>
+              <Field invalid={isInvalid("DocumentType")}>
+                <FieldLabel>
                   Identification Document <span className="req">*</span>
-                </label>
+                </FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   name="DocumentType"
-                  onChange={() => clearInvalid("DocumentType")}
+                  onChange={() => {
+                    markDirty();
+                    clearInvalid("DocumentType");
+                  }}
                   defaultValue={lead?.documentType ?? ""}
                   placeholder="--Select--"
                   options={docTypeOptions}
                 />
-              </div>
-              <div className={fieldClass("DocumentNo")}>
-                <label>
+              </Field>
+              <Field invalid={isInvalid("DocumentNo")}>
+                <FieldLabel>
                   Document Number <span className="req">*</span>
-                </label>
-                <input
+                </FieldLabel>
+                <Input
                   type="text"
                   name="DocumentNo"
                   defaultValue={lead?.documentNo}
                   placeholder="Document number"
                 />
-              </div>
-            </div>
+              </Field>
+            </WizardFieldGrid>
 
-            <div className={fieldClass(ID_FILE)}>
-              <label htmlFor="id-doc-input">
+            <Field invalid={isInvalid(ID_FILE)}>
+              <FieldLabel htmlFor="id-doc-input">
                 Upload Identification Document
-              </label>
-              <label className="lm-file-row" htmlFor="id-doc-input">
-                <input
+              </FieldLabel>
+              <label
+                className="relative flex items-center gap-2.5"
+                htmlFor="id-doc-input"
+              >
+                <FileInput
                   ref={idFileRef}
                   id="id-doc-input"
-                  type="file"
-                  className="lm-file-input"
+
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                   onChange={(event) => {
                     onIdFileChange(event);
                     clearInvalid(ID_FILE);
                   }}
                 />
-                <span className="lm-choose-btn">Choose File</span>
-                <span className="lm-file-name">{idFileLabel}</span>
+                <span
+                  data-slot="choose-btn"
+                  className="pointer-events-none relative z-[1] cursor-pointer rounded-[11px] border-[1.5px] border-care-line bg-care-bg px-[18px] py-3 text-[13.5px] font-bold whitespace-nowrap text-care-nav-ink"
+                >
+                  Choose File
+                </span>
+                <span className="text-[13px] font-bold text-care-sub">
+                  {idFileLabel}
+                </span>
               </label>
               {lead ?
                 <ExistingDocuments
@@ -743,13 +921,13 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   )}
                 />
               : null}
-            </div>
+            </Field>
 
-            <div className="lm-form-actions">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
               <div />
               <button
                 type="button"
-                className="lm-btn lm-btn-primary"
+                className={portalButtonClass("primary")}
                 onClick={() => advance(1)}
               >
                 Next{" "}
@@ -769,9 +947,9 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
             className={step === 2 ? "active" : undefined}
             hidden={step !== 2}
           >
-            <div className="lm-form-head">
-              <div className="lm-form-head-left">
-                <div className="lm-form-icon">
+            <div className="mb-[22px] flex items-center justify-between border-b border-care-line pb-[18px]">
+              <div className="flex items-center gap-3">
+                <div className="flex size-[42px] items-center justify-center rounded-xl bg-[#f1e9fe] [&_svg]:size-[21px] [&_svg]:text-care-purple">
                   <svg
                     fill="none"
                     stroke="currentColor"
@@ -782,30 +960,37 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                     <path d="M9 12h6M12 9v6" />
                   </svg>
                 </div>
-                <div className="lm-form-title">Medical Information</div>
+                <div className="text-lg font-extrabold">
+                  Medical Information
+                </div>
               </div>
-              <div className="lm-step-pill">Step 2 of 3</div>
+              <div className="rounded-[20px] bg-[#f1e9fe] px-[13px] py-1.5 text-xs font-bold text-care-purple">
+                Step 2 of 3
+              </div>
             </div>
 
-            <div className="lm-grid2">
-              <div className={fieldClass("TreatmentType")}>
-                <label>
+            <WizardFieldGrid>
+              <Field invalid={isInvalid("TreatmentType")}>
+                <FieldLabel>
                   Treatment Type <span className="req">*</span>
-                </label>
+                </FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   name="TreatmentType"
                   defaultValue={lead?.treatmentType ?? ""}
                   placeholder="--Select--"
                   options={treatmentOptions}
                   onChange={(value) => {
+                    markDirty();
                     setTreatment(value);
                     clearInvalid("TreatmentType");
                   }}
                 />
-              </div>
-              <div className="lm-field">
-                <label>Department</label>
+              </Field>
+              <Field>
+                <FieldLabel>Department</FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   key={treatment}
                   name="Department"
                   defaultValue={whenSame(
@@ -815,22 +1000,28 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   )}
                   placeholder="--Select--"
                   options={departmentOptions}
+                  onChange={() => markDirty()}
                 />
-              </div>
-              <div className="lm-field">
-                <label>Preferred Hospital</label>
+              </Field>
+              <Field>
+                <FieldLabel>Preferred Hospital</FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   name="ProviderCd"
                   defaultValue={lead?.providerCd ?? ""}
                   placeholder="--Select--"
                   options={providerOptions}
-                  onChange={setProvider}
+                  onChange={(value) => {
+                    markDirty();
+                    setProvider(value);
+                  }}
                   searchable
                 />
-              </div>
-              <div className="lm-field">
-                <label>Branch Location</label>
+              </Field>
+              <Field>
+                <FieldLabel>Branch Location</FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   key={provider}
                   name="BranchCd"
                   defaultValue={whenSame(
@@ -840,11 +1031,13 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   )}
                   placeholder="--Select--"
                   options={branchOptions}
+                  onChange={() => markDirty()}
                 />
-              </div>
-              <div className="lm-field">
-                <label>Preferred Doctor</label>
+              </Field>
+              <Field>
+                <FieldLabel>Preferred Doctor</FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   key={provider}
                   name="DoctorCd"
                   defaultValue={whenSame(
@@ -854,8 +1047,9 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   )}
                   placeholder="--Select--"
                   options={doctorOptions}
+                  onChange={() => markDirty()}
                 />
-              </div>
+              </Field>
               <CareaiCodeSearch
                 type={MASTER_CODE_TYPES.icd}
                 codeName="IcdCode"
@@ -878,36 +1072,43 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                 defaultCode={lead?.cptCode}
                 defaultDesc={lead?.cptDesc}
               />
-            </div>
+            </WizardFieldGrid>
 
-            <div className="lm-field">
-              <label>Diagnosis</label>
-              <textarea
+            <Field>
+              <FieldLabel>Diagnosis</FieldLabel>
+              <Textarea
                 name="Diagnosis"
                 defaultValue={lead?.diagnosis}
                 placeholder="Enter diagnosis details..."
               />
-            </div>
-            <div className="lm-field">
-              <label>Treatment</label>
-              <textarea
+            </Field>
+            <Field>
+              <FieldLabel>Treatment</FieldLabel>
+              <Textarea
                 name="Treatment"
                 defaultValue={lead?.treatment}
                 placeholder="Enter treatment details..."
               />
-            </div>
+            </Field>
 
-            <div className={fieldClass(MEDICAL_FILES)}>
-              <label htmlFor="med-reports-input">Medical Reports</label>
+            <Field invalid={isInvalid(MEDICAL_FILES)}>
+              <FieldLabel htmlFor="med-reports-input">
+                Medical Reports
+              </FieldLabel>
               <label
-                className={cn("lm-upload", medFileLabel && "has-file")}
+                data-slot="upload"
+                className={cn(
+                  "relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[14px] border-[1.5px] border-dashed border-[#d9d3ec] bg-[#fbfafd] px-[26px] py-[26px] text-center text-[#3f3b52] [&_.s]:mt-1 [&_.s]:text-xs [&_.s]:font-bold [&_.t]:text-sm [&_.t]:font-bold [&_svg]:mx-auto [&_svg]:mb-2.5 [&_svg]:block [&_svg]:size-[30px] [&_svg]:shrink-0 [&_svg]:text-care-pink",
+                  medFileLabel ?
+                    "[&_.t]:text-care-purple"
+                  : "[&_.t]:text-care-ink",
+                )}
                 htmlFor="med-reports-input"
               >
-                <input
+                <FileInput
                   ref={medFileRef}
                   id="med-reports-input"
-                  type="file"
-                  className="lm-file-input"
+
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   multiple
                   onChange={(event) => {
@@ -937,28 +1138,28 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   )}
                 />
               : null}
-            </div>
+            </Field>
 
-            <div className="lm-field">
-              <label>Case Notes & Remarks</label>
-              <textarea
+            <Field>
+              <FieldLabel>Case Notes & Remarks</FieldLabel>
+              <Textarea
                 name="CaseNote"
                 defaultValue={lead?.caseNote}
                 placeholder="Enter any special requirements, notes, or additional information..."
               />
-            </div>
+            </Field>
 
-            <div className="lm-form-actions">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
-                className="lm-btn lm-btn-ghost"
+                className={portalButtonClass("ghost")}
                 onClick={() => goStep(1)}
               >
                 Previous
               </button>
               <button
                 type="button"
-                className="lm-btn lm-btn-primary"
+                className={portalButtonClass("primary")}
                 onClick={() => advance(2)}
               >
                 Next{" "}
@@ -978,9 +1179,9 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
             className={step === 3 ? "active" : undefined}
             hidden={step !== 3}
           >
-            <div className="lm-form-head">
-              <div className="lm-form-head-left">
-                <div className="lm-form-icon">
+            <div className="mb-[22px] flex items-center justify-between border-b border-care-line pb-[18px]">
+              <div className="flex items-center gap-3">
+                <div className="flex size-[42px] items-center justify-center rounded-xl bg-[#f1e9fe] [&_svg]:size-[21px] [&_svg]:text-care-purple">
                   <svg
                     fill="none"
                     stroke="currentColor"
@@ -992,30 +1193,35 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                     <circle cx="7" cy="14.5" r="1" />
                   </svg>
                 </div>
-                <div className="lm-form-title">Mode of Payment</div>
+                <div className="text-lg font-extrabold">Mode of Payment</div>
               </div>
-              <div className="lm-step-pill">Step 3 of 3</div>
+              <div className="rounded-[20px] bg-[#f1e9fe] px-[13px] py-1.5 text-xs font-bold text-care-purple">
+                Step 3 of 3
+              </div>
             </div>
 
-            <div className="lm-grid2">
-              <div className={fieldClass("PaymentMode")}>
-                <label>
+            <WizardFieldGrid>
+              <Field invalid={isInvalid("PaymentMode")}>
+                <FieldLabel>
                   Payment Mode <span className="req">*</span>
-                </label>
+                </FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   name="PaymentMode"
                   defaultValue={lead?.paymentMode ?? ""}
                   placeholder="--Select--"
                   options={paymentOptions}
                   onChange={(value) => {
+                    markDirty();
                     setPaymentMode(value);
                     clearInvalid("PaymentMode");
                   }}
                 />
-              </div>
-              <div className="lm-field">
-                <label>Payment Type</label>
+              </Field>
+              <Field>
+                <FieldLabel>Payment Type</FieldLabel>
                 <CareaiSelect
+                  appearance="field"
                   key={paymentMode}
                   name="Guarantor"
                   defaultValue={whenSame(
@@ -1025,14 +1231,15 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
                   )}
                   placeholder="--Select--"
                   options={guarantorOptions}
+                  onChange={() => markDirty()}
                 />
-              </div>
-            </div>
+              </Field>
+            </WizardFieldGrid>
 
-            <div className="lm-form-actions">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
-                className="lm-btn lm-btn-ghost"
+                className={portalButtonClass("ghost")}
                 onClick={() => goStep(2)}
                 disabled={submitting}
               >
@@ -1040,53 +1247,77 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
               </button>
               <button
                 type="submit"
-                className="lm-btn lm-btn-primary"
+                className={portalButtonClass("primary")}
                 disabled={submitting}
               >
                 {submitting ?
-                  "Saving…"
+                  <>
+                    <span className={portalButtonSpinner} aria-hidden />
+                    {uploadingDocs ? "Uploading documents…" : "Saving…"}
+                  </>
                 : lead ?
                   "Save changes"
                 : "Submit"}
               </button>
             </div>
           </div>
-        </form>
+        </WizardForm>
       </div>
 
-      <div className={cn("lm-success", showSuccess && "show")}>
-        <div className="lm-success-check">
+      <div
+        className={cn(
+          "hidden rounded-[22px] bg-white px-10 py-14 text-center shadow-portal-wizard-form max-[640px]:px-[18px] max-[640px]:py-9",
+          showSuccess && "block",
+        )}
+      >
+        <div className="mx-auto mb-[22px] flex size-[82px] items-center justify-center rounded-full bg-care-grad shadow-[0_10px_26px_rgba(214,35,140,0.3)] [&_svg]:size-[38px] [&_svg]:text-white">
           <svg fill="none" stroke="#fff" strokeWidth="3" viewBox="0 0 24 24">
             <path d="M20 6L9 17l-5-5" />
           </svg>
         </div>
-        <h2>Success!</h2>
-        <p>
+        <h2 className="mb-2.5 text-[26px] font-extrabold text-care-purple">
+          Success!
+        </h2>
+        <p className="mb-[26px] text-[15px] text-care-sub">
           {lead ?
             "The registration has been updated."
           : "Patient lead has been successfully submitted."}
         </p>
-        <div className="lm-member">
-          <div className="lm-member-icon">
+        <div className="mb-[26px] inline-flex items-center gap-3 rounded-2xl bg-[#fbeaf4] px-6 py-3.5">
+          <div className="flex size-[38px] items-center justify-center rounded-full bg-care-grad [&_svg]:size-[18px] [&_svg]:text-white">
             <svg fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24">
               <rect x="3" y="5" width="18" height="14" rx="2" />
               <circle cx="9" cy="11" r="2" />
               <path d="M15 9h3M15 13h3M6 17c0-1.5 1.5-2.5 3-2.5s3 1 3 2.5" />
             </svg>
           </div>
-          <div className="lm-member-text">
-            <div className="lm-member-label">Member ID</div>
-            <div className="lm-member-id">{memberId || "—"}</div>
-            <div className="lm-member-label" style={{ marginTop: "0.75rem" }}>
+          <div className="text-left">
+            <div className="text-[11.5px] font-semibold text-care-sub">
+              Member ID
+            </div>
+            <div className="text-[17px] font-extrabold text-care-ink">
+              {memberId || "—"}
+            </div>
+            <div
+              className={cn(
+                "text-[11.5px] font-semibold text-care-sub",
+                "mt-3",
+              )}
+            >
               Treatment ID
             </div>
-            <div className="lm-member-id">{claimNo || "—"}</div>
+            <div className="text-[17px] font-extrabold text-care-ink">
+              {claimNo || "—"}
+            </div>
           </div>
         </div>
         {uploadResult ?
-          <div className="lm-upload-result" role="status">
+          <div
+            className="mx-auto mb-[22px] flex max-w-[420px] flex-col gap-2.5 text-left text-sm [&_b]:mb-1.5 [&_b]:block [&_li]:[overflow-wrap:anywhere] [&_ul]:m-0 [&_ul]:grid [&_ul]:list-none [&_ul]:gap-1 [&_ul]:p-0 [&>div]:rounded-[14px] [&>div]:px-[18px] [&>div]:py-3.5"
+            role="status"
+          >
             {uploadResult.uploaded.length > 0 ?
-              <div className="ok">
+              <div className="border border-[#bbf7d0] bg-[#f0fdf4] text-[#15803d] [&_li]:before:mr-2 [&_li]:before:content-['✓']">
                 <b>Documents uploaded</b>
                 <ul>
                   {uploadResult.uploaded.map((name) => (
@@ -1096,7 +1327,7 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
               </div>
             : null}
             {uploadResult.errors.length > 0 ?
-              <div className="bad">
+              <div className="border border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]">
                 <b>Not uploaded</b>
                 <ul>
                   {uploadResult.errors.map((message) => (
@@ -1107,18 +1338,20 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
             : null}
           </div>
         : null}
-        <p className="lm-success-note">Thank you for completing the form.</p>
-        <div className="lm-success-actions">
+        <p className="mb-[26px] text-[15px] text-care-sub">
+          Thank you for completing the form.
+        </p>
+        <div className="flex flex-wrap justify-center gap-2.5">
           {lead ?
             <Link
               href={`${ROUTES.agent.caseRegistration}/${encodeURIComponent(lead.claimNo)}/edit`}
-              className="lm-btn lm-btn-primary"
+              className={portalButtonClass("primary")}
             >
               Continue editing
             </Link>
           : <button
               type="button"
-              className="lm-btn lm-btn-primary"
+              className={portalButtonClass("primary")}
               onClick={resetWizard}
             >
               + Add New Request
@@ -1126,13 +1359,36 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
           }
           <Link
             href={ROUTES.agent.caseRegistration}
-            className="lm-btn lm-btn-ghost"
+            className={portalButtonClass("ghost")}
           >
             View all registrations
           </Link>
         </div>
       </div>
       <CareaiValidationDialog messages={issues} onClose={() => setIssues([])} />
+      <DialogShell
+        ref={leaveDialogRef}
+        aria-labelledby={leaveTitleId}
+        onClose={() => setShowLeaveConfirm(false)}
+      >
+        <DialogHeader badge="?" titleId={leaveTitleId}>
+          Leave this form?
+        </DialogHeader>
+        <p className="m-0 px-6 pb-2 text-sm leading-normal text-care-sub">
+          You have unsaved changes. If you go back now, your edits will be lost.
+        </p>
+        <DialogActions split>
+          <DialogButton
+            variant="secondary"
+            onClick={() => setShowLeaveConfirm(false)}
+          >
+            Keep editing
+          </DialogButton>
+          <DialogButton onClick={leaveToRegistrations}>
+            Leave without saving
+          </DialogButton>
+        </DialogActions>
+      </DialogShell>
     </div>
   );
 }

@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AgentCaseRegistrationContent } from "@/components/portal/agent-pages/AgentCaseRegistrationContent";
+import { PageHeader } from "@/components/portal/page-header";
 import { LEAD_EDITABLE_STATUS_GROUP } from "@/config/lead";
 import { ROUTES } from "@/config/routes";
 import { fetchAgentLead } from "@/server/leads";
@@ -18,19 +18,19 @@ export async function RegistrationEdit({
 
   if (lead.statusGrp !== LEAD_EDITABLE_STATUS_GROUP) {
     return (
-      <>
-        <h1 className="lm-h1">{lead.claimNo}</h1>
-        <p className="lm-sub">
-          This case is now at &ldquo;{lead.statusNm}&rdquo; and can no longer be
-          edited.
-        </p>
-        <Link
-          href={ROUTES.agent.caseRegistration}
-          className="lm-btn lm-btn-primary"
-        >
-          Back to registrations
-        </Link>
-      </>
+      <PageHeader
+        back={{
+          href: ROUTES.agent.caseRegistration,
+          label: "Back to registrations",
+        }}
+        title={lead.claimNo}
+        subtitle={
+          <>
+            This case is now at &ldquo;{lead.statusNm}&rdquo; and can no longer
+            be edited.
+          </>
+        }
+      />
     );
   }
   return <AgentCaseRegistrationContent lead={lead} />;

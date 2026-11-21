@@ -1,5 +1,6 @@
 "use client";
 
+import { PortalTopbar } from "@/components/portal/portal-topbar";
 import { PortalTopbarAvatar } from "@/components/portal/portal-topbar-avatar";
 
 type PortalSearchTopbarProps = {
@@ -14,9 +15,10 @@ export function PortalSearchTopbar({
   onQueryChange,
 }: PortalSearchTopbarProps) {
   return (
-    <header className="lm-topbar">
-      <label className="lm-search">
+    <PortalTopbar>
+      <label className="flex w-[340px] max-w-[50vw] items-center gap-2.5 rounded-xl bg-care-bg px-4 py-2.5 text-[13.5px] text-care-search">
         <svg
+          className="size-[17px] shrink-0"
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
@@ -28,17 +30,17 @@ export function PortalSearchTopbar({
         </svg>
         <input
           type="search"
-          className="lm-search-input"
+          className="min-w-0 flex-1 border-none bg-transparent font-[inherit] text-care-ink outline-none placeholder:text-care-search"
           placeholder={searchPlaceholder}
           value={query}
           onChange={(event) => onQueryChange?.(event.target.value)}
           aria-label={searchPlaceholder}
         />
       </label>
-      <div className="lm-top-actions">
+      <div className="flex items-center gap-[18px]">
         <button
           type="button"
-          className="lm-icon-btn"
+          className="relative flex size-10 cursor-pointer items-center justify-center rounded-[11px] bg-care-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-care-purple [&_svg]:size-[19px] [&_svg]:text-care-nav-ink"
           aria-label="Notifications"
         >
           <svg
@@ -51,10 +53,10 @@ export function PortalSearchTopbar({
             <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-          <span className="dot" />
+          <span className="absolute top-2 right-2 size-[7px] rounded-full border-2 border-white bg-care-coral" />
         </button>
         <PortalTopbarAvatar />
       </div>
-    </header>
+    </PortalTopbar>
   );
 }

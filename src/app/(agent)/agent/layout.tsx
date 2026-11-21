@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import "@/styles/careai-portal.css";
+import "@/styles/forms.css";
 
 import { PortalSession } from "@/components/portal/portal-session";
 import { noIndexRobots } from "@/config/site";

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import type { ApiEnvelope } from "@/lib/api/client";
 import type { LeadDetail, LeadSummary } from "@/services/lead";
 
-import { API_ENDPOINTS, BFF_ENDPOINTS, MASTER_QUERY } from "@/config/api";
+import { API_ENDPOINTS, BFF_ENDPOINTS } from "@/config/api";
 import { PORTAL_TOKEN_COOKIE } from "@/config/portal-session";
 import { apiBaseUrl } from "@/config/server-env";
 
@@ -48,18 +48,4 @@ export async function fetchAgentLeads(
 /** One of the agent's own registrations; null when it does not exist or belongs to someone else. */
 export function fetchAgentLead(claimNo: string): Promise<LeadDetail | null> {
   return getFromApi<LeadDetail>(API_ENDPOINTS.lead.portalLead(claimNo));
-}
-
-/** Display name of a master item (for a stored code), or the code itself when it is not listed. */
-export async function fetchMasterItemName(
-  itemType: string,
-  code: string,
-): Promise<string> {
-  if (!code) return "";
-  const query = new URLSearchParams({ [MASTER_QUERY.itemType]: itemType });
-  const rows = await getFromApi<{ value: string; text: string }[]>(
-    `${API_ENDPOINTS.master.items}?${query}`,
-    false,
-  );
-  return rows?.find((row) => row.value === code)?.text ?? code;
 }

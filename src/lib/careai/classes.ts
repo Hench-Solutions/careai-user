@@ -1,10 +1,5 @@
 import { cn } from "@/lib/utils";
 
-export const careaiPortal = {
-  root: "careai-portal",
-  main: "lm-main",
-} as const;
-
 export const careaiLogin = {
   root: "careai-login",
   backLink: "back-link",

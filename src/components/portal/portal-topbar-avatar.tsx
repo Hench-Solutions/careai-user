@@ -1,14 +1,10 @@
+import { PortalAvatar } from "@/components/portal/portal-avatar";
 import { UserField } from "@/components/portal/portal-user-field";
-import { cn } from "@/lib/utils";
 
-type PortalTopbarAvatarProps = {
-  className?: string;
-};
-
-export function PortalTopbarAvatar({ className }: PortalTopbarAvatarProps) {
+export function PortalTopbarAvatar() {
   return (
-    <div className={cn("lm-avatar", className)}>
+    <PortalAvatar>
       <UserField field="initials" />
-    </div>
+    </PortalAvatar>
   );
 }

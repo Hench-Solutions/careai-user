@@ -2,6 +2,13 @@
 
 import { useEffect, useId, useRef } from "react";
 
+import {
+  DialogActions,
+  DialogButton,
+  DialogHeader,
+  DialogShell,
+} from "@/components/ui/dialog";
+
 type CareaiValidationDialogProps = {
   messages: readonly string[];
   onClose: () => void;
@@ -23,28 +30,25 @@ export function CareaiValidationDialog({
   }, [messages]);
 
   return (
-    <dialog
-      ref={ref}
-      className="careai-dialog"
-      aria-labelledby={titleId}
-      onClose={onClose}
-    >
-      <div className="careai-dialog-head">
-        <span className="careai-dialog-icon" aria-hidden>
-          !
-        </span>
-        <h2 id={titleId}>Please review the following fields</h2>
-      </div>
-      <ul className="careai-dialog-list">
+    <DialogShell ref={ref} aria-labelledby={titleId} onClose={onClose}>
+      <DialogHeader badge="!" titleId={titleId}>
+        Please review the following fields
+      </DialogHeader>
+      <ul className="m-0 max-h-[50vh] list-none overflow-y-auto px-6 pt-[18px] pb-2">
         {messages.map((message) => (
-          <li key={message}>{message}</li>
+          <li
+            key={message}
+            className="relative py-2 pr-0 pl-7 text-[15px] text-[#333] before:absolute before:top-1/2 before:left-1 before:-mt-[5px] before:size-2.5 before:rounded-full before:border-[3px] before:border-care-purple before:content-['']"
+          >
+            {message}
+          </li>
         ))}
       </ul>
-      <div className="careai-dialog-actions">
-        <button type="button" autoFocus onClick={() => ref.current?.close()}>
+      <DialogActions>
+        <DialogButton autoFocus onClick={() => ref.current?.close()}>
           OK
-        </button>
-      </div>
-    </dialog>
+        </DialogButton>
+      </DialogActions>
+    </DialogShell>
   );
 }

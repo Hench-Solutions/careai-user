@@ -52,6 +52,13 @@ export function uploadLeadDocuments(input: {
 
 type MasterRow = { value: string; text: string };
 
+/** In-flight + session reuse so the wizard does not refetch the same master list per field. */
+const masterOptionsCache = new Map<string, Promise<MasterOption[]>>();
+
+function masterCacheKey(url: string, params: Record<string, string>): string {
+  return `${url}?${new URLSearchParams(params)}`;
+}
+
 /** A master list as select options; an unavailable list is an empty one. */
 async function fetchOptions(
   url: string,
@@ -68,11 +75,27 @@ async function fetchOptions(
   }
 }
 
+function fetchOptionsCached(
+  url: string,
+  params: Record<string, string>,
+): Promise<MasterOption[]> {
+  const key = masterCacheKey(url, params);
+  let pending = masterOptionsCache.get(key);
+  if (!pending) {
+    pending = fetchOptions(url, params);
+    masterOptionsCache.set(key, pending);
+    void pending.then((rows) => {
+      if (rows.length === 0) masterOptionsCache.delete(key);
+    });
+  }
+  return pending;
+}
+
 export function fetchMasterDropdown(
   mode: string,
   filterId = "",
 ): Promise<MasterOption[]> {
-  return fetchOptions(BFF_ENDPOINTS.master.dropdown, {
+  return fetchOptionsCached(BFF_ENDPOINTS.master.dropdown, {
     [MASTER_QUERY.mode]: mode,
     ...(filterId && { [MASTER_QUERY.filterId]: filterId }),
   });
@@ -82,7 +105,7 @@ export function fetchMasterItems(
   itemType: string,
   filterId = "",
 ): Promise<MasterOption[]> {
-  return fetchOptions(BFF_ENDPOINTS.master.items, {
+  return fetchOptionsCached(BFF_ENDPOINTS.master.items, {
     [MASTER_QUERY.itemType]: itemType,
     ...(filterId && { [MASTER_QUERY.filterId]: filterId }),
   });

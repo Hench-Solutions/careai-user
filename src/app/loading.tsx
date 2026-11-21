@@ -5,7 +5,9 @@ export default function Loading() {
         className="size-10 animate-spin rounded-full border-[3px] border-care-line border-t-care-purple"
         aria-hidden
       />
-      <p className="mt-4 text-sm font-semibold text-care-sub">Loading…</p>
+      <p className="mt-4 text-sm leading-5 font-semibold text-care-sub">
+        Loading…
+      </p>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { PatientConsultExpertContent } from "@/components/portal/patient-pages/PatientConsultExpertContent";
+import { PortalContent } from "@/components/portal/portal-content";
 import { PortalSearchTopbar } from "@/components/portal/portal-search-topbar";
 
 export const metadata: Metadata = {
@@ -11,9 +12,9 @@ export default function PatientConsultExpertPage() {
   return (
     <>
       <PortalSearchTopbar searchPlaceholder="Search specialists, specialties..." />
-      <div className="lm-content">
+      <PortalContent>
         <PatientConsultExpertContent />
-      </div>
+      </PortalContent>
     </>
   );
 }

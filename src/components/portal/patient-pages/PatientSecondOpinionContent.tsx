@@ -7,7 +7,19 @@ import {
   ServiceHero,
   StatsRow,
 } from "@/components/portal/patient-pages/patient-page-blocks";
-import { PgForm } from "@/components/portal/patient-pages/pg-form";
+import {
+  PgForm,
+  PgSubmitButton,
+} from "@/components/portal/patient-pages/pg-form";
+import {
+  PgField,
+  PgPanels,
+  PgSection,
+  PgUpload,
+  Required,
+} from "@/components/portal/patient-pages/pg-primitives";
+import { FieldLabel, Input, Textarea } from "@/components/ui/field";
+import { FileInput } from "@/components/ui/file-input";
 
 const OPINION_STATS = [
   { num: "3–5", lbl: "Days Standard Turnaround" },
@@ -98,8 +110,8 @@ export function PatientSecondOpinionContent() {
 
       <StatsRow items={OPINION_STATS} />
 
-      <div className="pg-panels">
-        <div className="pg-section !mb-0" id="upload">
+      <PgPanels>
+        <PgSection className="mb-0" id="upload">
           <SectionHeader
             icon={
               <svg
@@ -120,37 +132,54 @@ export function PatientSecondOpinionContent() {
             successTitle="Case Submitted for Review"
             successMessage="Thank you — a specialist will review your case and your written report will be ready within the selected timeframe."
           >
-            <div className="pg-field">
-              <label>
-                Full Name <span className="pg-required">*</span>
-              </label>
-              <input type="text" placeholder="Patient's full name" required />
-            </div>
-            <div className="pg-field">
-              <label>
-                Email Address <span className="pg-required">*</span>
-              </label>
-              <input type="email" placeholder="you@example.com" required />
-            </div>
-            <div className="pg-field">
-              <label>
-                Phone Number <span className="pg-required">*</span>
-              </label>
-              <input type="tel" placeholder="+91 98765 43210" required />
-            </div>
-            <div className="pg-field">
-              <label>
-                Current Diagnosis <span className="pg-required">*</span>
-              </label>
-              <input
+            <PgField>
+              <FieldLabel variant="soft">
+                Full Name <Required />
+              </FieldLabel>
+              <Input
+                variant="soft"
+                type="text"
+                placeholder="Patient's full name"
+                required
+              />
+            </PgField>
+            <PgField>
+              <FieldLabel variant="soft">
+                Email Address <Required />
+              </FieldLabel>
+              <Input
+                variant="soft"
+                type="email"
+                placeholder="you@example.com"
+                required
+              />
+            </PgField>
+            <PgField>
+              <FieldLabel variant="soft">
+                Phone Number <Required />
+              </FieldLabel>
+              <Input
+                variant="soft"
+                type="tel"
+                placeholder="+91 98765 43210"
+                required
+              />
+            </PgField>
+            <PgField>
+              <FieldLabel variant="soft">
+                Current Diagnosis <Required />
+              </FieldLabel>
+              <Input
+                variant="soft"
                 type="text"
                 placeholder="e.g. Stage II Breast Cancer"
                 required
               />
-            </div>
-            <div className="pg-field">
-              <label>Preferred Specialty</label>
+            </PgField>
+            <PgField>
+              <FieldLabel variant="soft">Preferred Specialty</FieldLabel>
               <CareaiSelect
+                appearance="pg"
                 defaultValue="Oncology"
                 options={careaiOptionsFromLabels([
                   "Oncology",
@@ -159,22 +188,21 @@ export function PatientSecondOpinionContent() {
                   "Neurology",
                 ])}
               />
-            </div>
-            <div className="pg-field">
-              <label>Urgency</label>
+            </PgField>
+            <PgField>
+              <FieldLabel variant="soft">Urgency</FieldLabel>
               <CareaiSelect
+                appearance="pg"
                 defaultValue="Standard (3–5 days)"
                 options={careaiOptionsFromLabels([
                   "Standard (3–5 days)",
                   "Urgent (24–48 hrs)",
                 ])}
               />
-            </div>
-            <label className="pg-upload full" htmlFor="second-opinion-upload">
-              <input
+            </PgField>
+            <PgUpload className="col-span-full" htmlFor="second-opinion-upload">
+              <FileInput
                 id="second-opinion-upload"
-                type="file"
-                className="pg-file-input"
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                 multiple
               />
@@ -191,25 +219,26 @@ export function PatientSecondOpinionContent() {
                 <span className="browse">Click to upload</span> or drag reports,
                 scans & lab results here
               </p>
-            </label>
-            <div className="pg-field full">
-              <label>Additional Notes</label>
-              <textarea placeholder="Anything the reviewing specialist should know." />
-            </div>
-            <div className="full">
-              <button className="pg-btn solid" type="submit">
-                Submit for Review
-              </button>
+            </PgUpload>
+            <PgField className="col-span-full">
+              <FieldLabel variant="soft">Additional Notes</FieldLabel>
+              <Textarea
+                variant="soft"
+                placeholder="Anything the reviewing specialist should know."
+              />
+            </PgField>
+            <div className="col-span-full">
+              <PgSubmitButton>Submit for Review</PgSubmitButton>
               <FormConfidentialNote>
                 Your records are reviewed only by the assigned specialist and
                 kept confidential.
               </FormConfidentialNote>
             </div>
           </PgForm>
-        </div>
-      </div>
+        </PgSection>
+      </PgPanels>
 
-      <div className="pg-section">
+      <PgSection>
         <SectionHeader
           icon={
             <svg
@@ -225,7 +254,7 @@ export function PatientSecondOpinionContent() {
           title="When to Get a Second Opinion"
         />
         <FeatureGrid items={WHEN_FEATURES} />
-      </div>
+      </PgSection>
     </>
   );
 }

@@ -10,7 +10,19 @@ import {
   StatsRow,
   StepsList,
 } from "@/components/portal/patient-pages/patient-page-blocks";
-import { PgForm } from "@/components/portal/patient-pages/pg-form";
+import {
+  PgForm,
+  PgSubmitButton,
+} from "@/components/portal/patient-pages/pg-form";
+import {
+  PgField,
+  PgPanels,
+  PgSection,
+  PgUpload,
+  Required,
+} from "@/components/portal/patient-pages/pg-primitives";
+import { FieldLabel, Input, Textarea } from "@/components/ui/field";
+import { FileInput } from "@/components/ui/file-input";
 
 const OVERSEAS_STATS = [
   { num: "6", lbl: "Partner Countries" },
@@ -186,7 +198,7 @@ export function PatientOverseasTreatmentContent() {
 
       <StatsRow items={OVERSEAS_STATS} />
 
-      <div className="pg-section">
+      <PgSection>
         <SectionHeader
           icon={
             <svg
@@ -203,9 +215,9 @@ export function PatientOverseasTreatmentContent() {
           sub="Cost of care vs. home country, by destination"
         />
         <CountryGrid countries={COUNTRIES} />
-      </div>
+      </PgSection>
 
-      <div className="pg-section">
+      <PgSection>
         <SectionHeader
           icon={
             <svg
@@ -221,10 +233,10 @@ export function PatientOverseasTreatmentContent() {
           title="Why Choose Overseas Treatment With Us"
         />
         <FeatureGrid items={WHY_FEATURES} />
-      </div>
+      </PgSection>
 
-      <div className="pg-panels">
-        <div className="pg-section !mb-0">
+      <PgPanels>
+        <PgSection className="mb-0">
           <SectionHeader
             icon={
               <svg
@@ -239,8 +251,8 @@ export function PatientOverseasTreatmentContent() {
             title="How It Works"
           />
           <StepsList steps={STEPS} />
-        </div>
-        <div className="pg-section !mb-0">
+        </PgSection>
+        <PgSection className="mb-0">
           <SectionHeader
             icon={
               <svg
@@ -256,10 +268,10 @@ export function PatientOverseasTreatmentContent() {
             title="Popular Procedures"
           />
           <ProcedureTable rows={PROCEDURES} />
-        </div>
-      </div>
+        </PgSection>
+      </PgPanels>
 
-      <div className="pg-section" id="apply">
+      <PgSection id="apply">
         <SectionHeader
           icon={
             <svg
@@ -279,31 +291,47 @@ export function PatientOverseasTreatmentContent() {
           successTitle="Application Received"
           successMessage="Thank you — a treatment coordinator will review your case and reach out within 48 hours with a personalized plan and quote."
         >
-          <div className="pg-field">
-            <label>
-              Full Name <span className="pg-required">*</span>
-            </label>
-            <input type="text" placeholder="Patient's full name" required />
-          </div>
-          <div className="pg-field">
-            <label>
-              Email Address <span className="pg-required">*</span>
-            </label>
-            <input type="email" placeholder="you@example.com" required />
-          </div>
-          <div className="pg-field">
-            <label>
-              Phone Number <span className="pg-required">*</span>
-            </label>
-            <input type="tel" placeholder="+91 98765 43210" required />
-          </div>
-          <div className="pg-field">
-            <label>Country of Residence</label>
-            <input type="text" placeholder="e.g. India" />
-          </div>
-          <div className="pg-field">
-            <label>Preferred Destination</label>
+          <PgField>
+            <FieldLabel variant="soft">
+              Full Name <Required />
+            </FieldLabel>
+            <Input
+              variant="soft"
+              type="text"
+              placeholder="Patient's full name"
+              required
+            />
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">
+              Email Address <Required />
+            </FieldLabel>
+            <Input
+              variant="soft"
+              type="email"
+              placeholder="you@example.com"
+              required
+            />
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">
+              Phone Number <Required />
+            </FieldLabel>
+            <Input
+              variant="soft"
+              type="tel"
+              placeholder="+91 98765 43210"
+              required
+            />
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">Country of Residence</FieldLabel>
+            <Input variant="soft" type="text" placeholder="e.g. India" />
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">Preferred Destination</FieldLabel>
             <CareaiSelect
+              appearance="pg"
               defaultValue=""
               placeholder="Select a country"
               options={careaiOptionsFromLabels(
@@ -318,26 +346,25 @@ export function PatientOverseasTreatmentContent() {
                 { label: "Select a country" },
               )}
             />
-          </div>
-          <div className="pg-field">
-            <label>
-              Procedure / Condition <span className="pg-required">*</span>
-            </label>
-            <input
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">
+              Procedure / Condition <Required />
+            </FieldLabel>
+            <Input
+              variant="soft"
               type="text"
               placeholder="e.g. Cardiac Bypass Surgery"
               required
             />
-          </div>
-          <div className="pg-field full">
-            <label htmlFor="overseas-med-upload">
+          </PgField>
+          <PgField className="col-span-full">
+            <FieldLabel htmlFor="overseas-med-upload" variant="soft">
               Medical Reports (optional)
-            </label>
-            <label className="pg-upload" htmlFor="overseas-med-upload">
-              <input
+            </FieldLabel>
+            <PgUpload htmlFor="overseas-med-upload">
+              <FileInput
                 id="overseas-med-upload"
-                type="file"
-                className="pg-file-input"
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                 multiple
               />
@@ -354,14 +381,17 @@ export function PatientOverseasTreatmentContent() {
                 <span className="browse">Click to upload</span> or drag reports,
                 scans & prescriptions here
               </p>
-            </label>
-          </div>
-          <div className="pg-field full">
-            <label>Additional Notes</label>
-            <textarea placeholder="Share any details that will help us plan your treatment — preferred travel dates, budget range, companion travel, etc." />
-          </div>
-          <div className="full">
-            <button className="pg-btn solid" type="submit">
+            </PgUpload>
+          </PgField>
+          <PgField className="col-span-full">
+            <FieldLabel variant="soft">Additional Notes</FieldLabel>
+            <Textarea
+              variant="soft"
+              placeholder="Share any details that will help us plan your treatment — preferred travel dates, budget range, companion travel, etc."
+            />
+          </PgField>
+          <div className="col-span-full">
+            <PgSubmitButton>
               <svg
                 fill="none"
                 stroke="currentColor"
@@ -371,14 +401,14 @@ export function PatientOverseasTreatmentContent() {
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
               Submit Application
-            </button>
+            </PgSubmitButton>
             <FormConfidentialNote>
               Your information is kept confidential and shared only with your
               care team.
             </FormConfidentialNote>
           </div>
         </PgForm>
-      </div>
+      </PgSection>
     </>
   );
 }

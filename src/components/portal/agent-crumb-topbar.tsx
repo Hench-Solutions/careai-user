@@ -1,3 +1,4 @@
+import { PortalTopbar } from "@/components/portal/portal-topbar";
 import { PortalTopbarAvatar } from "@/components/portal/portal-topbar-avatar";
 
 type AgentCrumbTopbarProps = {
@@ -6,11 +7,11 @@ type AgentCrumbTopbarProps = {
 
 export function AgentCrumbTopbar({ label }: AgentCrumbTopbarProps) {
   return (
-    <header className="lm-topbar">
-      <div className="lm-crumb">
+    <PortalTopbar>
+      <div className="text-sm font-semibold text-care-sub [&_span]:font-extrabold [&_span]:text-care-ink">
         Quick Action / <span>{label}</span>
       </div>
-      <PortalTopbarAvatar className="sm" />
-    </header>
+      <PortalTopbarAvatar />
+    </PortalTopbar>
   );
 }

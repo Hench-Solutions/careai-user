@@ -1,14 +1,50 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { AgentActionWidgetIcon } from "@/components/portal/agent-action-widget-icon";
+import { PageHeader } from "@/components/portal/page-header";
 import { PortalMockBanner } from "@/components/portal/portal-mock-banner";
+import { portalButtonClass } from "@/components/ui/button";
+import { portalFilterChipClass } from "@/components/ui/chip";
+import { portalSub } from "@/components/ui/typography";
 import { careaiMockAgentActionItems } from "@/config/careai-mock";
 import { ROUTES } from "@/config/routes";
 import { useMockFeedback } from "@/hooks/use-mock-feedback";
+import { cn } from "@/lib/utils";
+
+const portalActionRequired = {
+  card: (priority: "high" | "medium" | "low") =>
+    cn(
+      "flex items-start gap-4 rounded-2xl border border-care-line bg-white px-[22px] py-5 shadow-care",
+      priority === "high" && "border-l-4 border-l-care-red",
+      priority === "medium" && "border-l-4 border-l-care-amber",
+      priority === "low" && "border-l-4 border-l-care-blue",
+    ),
+  icon: (priority: "high" | "medium" | "low") =>
+    cn(
+      "flex size-11 shrink-0 items-center justify-center rounded-xl [&_svg]:size-[21px]",
+      priority === "high" && "bg-[#fde8e8] text-care-red",
+      priority === "medium" && "bg-[#fef3e0] text-[#b8720a]",
+      priority === "low" && "bg-[#e9f0fe] text-care-blue",
+    ),
+  priority: (p: "high" | "medium" | "low") =>
+    cn(
+      "rounded-[20px] px-[11px] py-1 text-[11px] font-extrabold tracking-[0.03em] uppercase text-white",
+      p === "high" && "bg-care-red",
+      p === "medium" && "bg-care-amber",
+      p === "low" && "bg-care-blue",
+    ),
+  btnGhost: cn(
+    portalButtonClass("ghost"),
+    "!rounded-[10px] !px-4 !py-[9px] !text-[13px]",
+  ),
+  btnPrimary: cn(
+    portalButtonClass("primary"),
+    "!rounded-[10px] !px-4 !py-[9px] !text-[13px]",
+  ),
+} as const;
 
 const PRIORITIES = ["All", "High", "Medium", "Low"] as const;
 
@@ -35,18 +71,17 @@ export function AgentActionRequiredContent() {
   return (
     <>
       <PortalMockBanner message={message} />
-      <h1 className="lm-h1">Action Required</h1>
-      <p className="lm-sub">
-        Items across your cases that are waiting on a decision, signature, or
-        upload from you.
-      </p>
+      <PageHeader
+        title="Action Required"
+        subtitle="Items across your cases that are waiting on a decision, signature, or upload from you."
+      />
 
-      <div className="ar-filterbar">
+      <div className="mb-[22px] flex flex-wrap gap-2">
         {PRIORITIES.map((label) => (
           <button
             key={label}
             type="button"
-            className={filter === label ? "ar-chip active" : "ar-chip"}
+            className={portalFilterChipClass(filter === label)}
             aria-pressed={filter === label}
             onClick={() => setFilter(label)}
           >
@@ -55,69 +90,72 @@ export function AgentActionRequiredContent() {
         ))}
       </div>
 
-      <div className="ar-list">
+      <div className="flex flex-col gap-3.5">
         {items.length === 0 ?
-          <p className="lm-sub">
+          <p className={portalSub}>
             {resolvedIds.length > 0 ?
               "All visible items are handled for this filter (demo)."
             : "No items match this priority."}
           </p>
-        : items.map((item) => (
-            <div
-              key={item.id}
-              className={`ar-card ${item.priority.toLowerCase()}`}
-            >
-              <div className="ar-icon">
-                <AgentActionWidgetIcon kind={item.widgetIcon} />
-              </div>
-              <div className="ar-body">
-                <div className="ar-top">
-                  <div className="ar-title">{item.cardTitle}</div>
-                  <span className="ar-priority">{item.priority}</span>
+        : items.map((item) => {
+            const pri = item.priority.toLowerCase() as
+              "high" | "medium" | "low";
+            return (
+              <div key={item.id} className={portalActionRequired.card(pri)}>
+                <div className={portalActionRequired.icon(pri)}>
+                  <AgentActionWidgetIcon kind={item.widgetIcon} />
                 </div>
-                <div className="ar-desc">{item.description}</div>
-                <div className="ar-meta-row">
-                  <div className="ar-tags">{item.tags}</div>
-                  <div className="ar-actions">
-                    <button
-                      type="button"
-                      className="ar-btn ghost"
-                      onClick={() => {
-                        if (item.ghostLabel.includes("Invoice")) {
-                          router.push(ROUTES.agent.referralInvoice);
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="text-[15px] font-extrabold">
+                      {item.cardTitle}
+                    </div>
+                    <span className={portalActionRequired.priority(pri)}>
+                      {item.priority}
+                    </span>
+                  </div>
+                  <div className="mt-[5px] text-[13.5px] leading-normal text-care-sub">
+                    {item.description}
+                  </div>
+                  <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2.5">
+                    <div className="flex gap-2 text-xs text-care-sub [&_b]:text-care-ink">
+                      {item.tags}
+                    </div>
+                    <div className="flex gap-2.5">
+                      <button
+                        type="button"
+                        className={portalActionRequired.btnGhost}
+                        onClick={() => {
+                          if (item.ghostLabel.includes("Invoice")) {
+                            router.push(ROUTES.agent.referralInvoice);
+                            showFeedback(item.ghostSuccess);
+                            return;
+                          }
+                          if (item.caseId) {
+                            router.push(ROUTES.agent.caseStatus);
+                          }
                           showFeedback(item.ghostSuccess);
-                          return;
+                        }}
+                      >
+                        {item.ghostLabel}
+                      </button>
+                      <button
+                        type="button"
+                        className={portalActionRequired.btnPrimary}
+                        onClick={() =>
+                          markResolved(item.id, item.primarySuccess)
                         }
-                        if (item.caseId) {
-                          router.push(ROUTES.agent.caseStatus);
-                        }
-                        showFeedback(item.ghostSuccess);
-                      }}
-                    >
-                      {item.ghostLabel}
-                    </button>
-                    <button
-                      type="button"
-                      className="ar-btn primary"
-                      onClick={() => markResolved(item.id, item.primarySuccess)}
-                    >
-                      {item.primaryLabel}
-                    </button>
+                      >
+                        {item.primaryLabel}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         }
       </div>
-
-      {resolvedIds.length > 0 ?
-        <p className="lm-back-row">
-          <Link href={ROUTES.agent.dashboard} className="lm-back">
-            Back to dashboard
-          </Link>
-        </p>
-      : null}
     </>
   );
 }

@@ -247,6 +247,16 @@ export async function readJsonObjectLimited(
 
 type MasterRow = { value: string; text: string };
 
+/** Browser may reuse master list responses; data is not user-specific (query identifies the list only). */
+const MASTER_LIST_CACHE_CONTROL =
+  "private, max-age=300, stale-while-revalidate=120";
+
+function jsonMasterList(rows: MasterRow[]): NextResponse {
+  const res = jsonEnvelope(rows);
+  res.headers.set("Cache-Control", MASTER_LIST_CACHE_CONTROL);
+  return res;
+}
+
 /**
  * Forwards one master-list request to the API, but only for the values the portal is allowed to
  * ask for. `param` is the query name that carries the choice (`mode` or `itemType`).
@@ -274,7 +284,7 @@ export async function proxyMasterList(
     `${config.apiPath}?${query}`,
     API_MESSAGES.generic,
   );
-  return result.ok ? jsonEnvelope(result.data) : result.response;
+  return result.ok ? jsonMasterList(result.data) : result.response;
 }
 
 type CodeRow = { cd: string; nm: string };

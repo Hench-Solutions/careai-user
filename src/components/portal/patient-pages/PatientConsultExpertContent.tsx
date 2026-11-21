@@ -17,7 +17,17 @@ import {
   StatsRow,
   StepsList,
 } from "@/components/portal/patient-pages/patient-page-blocks";
-import { PgForm } from "@/components/portal/patient-pages/pg-form";
+import {
+  PgForm,
+  PgSubmitButton,
+} from "@/components/portal/patient-pages/pg-form";
+import {
+  PgField,
+  PgPanels,
+  PgSection,
+  Required,
+} from "@/components/portal/patient-pages/pg-primitives";
+import { FieldLabel, Input, Textarea } from "@/components/ui/field";
 
 const CONSULT_STATS = [
   { num: "180+", lbl: "Specialists Network" },
@@ -131,7 +141,7 @@ export function PatientConsultExpertContent() {
 
       <StatsRow items={CONSULT_STATS} />
 
-      <div className="pg-section" id="book">
+      <PgSection id="book">
         <SectionHeader
           icon={
             <svg
@@ -148,10 +158,10 @@ export function PatientConsultExpertContent() {
           sub="Pick a specialist and request a consultation"
         />
         <DoctorGrid doctors={SPECIALISTS} onSelect={prefillSpecialist} />
-      </div>
+      </PgSection>
 
-      <div className="pg-panels">
-        <div className="pg-section !mb-0">
+      <PgPanels>
+        <PgSection className="mb-0">
           <SectionHeader
             icon={
               <svg
@@ -166,8 +176,8 @@ export function PatientConsultExpertContent() {
             title="How Consultations Work"
           />
           <StepsList steps={CONSULT_STEPS} />
-        </div>
-        <div className="pg-section !mb-0">
+        </PgSection>
+        <PgSection className="mb-0">
           <SectionHeader
             icon={
               <svg
@@ -185,10 +195,10 @@ export function PatientConsultExpertContent() {
             title="Specialties Available"
           />
           <SpecialtyBadges labels={SPECIALTY_LABELS} />
-        </div>
-      </div>
+        </PgSection>
+      </PgPanels>
 
-      <div className="pg-section" id="book-form">
+      <PgSection id="book-form">
         <SectionHeader
           icon={
             <svg
@@ -208,27 +218,43 @@ export function PatientConsultExpertContent() {
           successTitle="Consultation Requested"
           successMessage="Thank you — our team will confirm your appointment time and send joining details within 24 hours."
         >
-          <div className="pg-field">
-            <label>
-              Full Name <span className="pg-required">*</span>
-            </label>
-            <input type="text" placeholder="Your full name" required />
-          </div>
-          <div className="pg-field">
-            <label>
-              Email Address <span className="pg-required">*</span>
-            </label>
-            <input type="email" placeholder="you@example.com" required />
-          </div>
-          <div className="pg-field">
-            <label>
-              Phone Number <span className="pg-required">*</span>
-            </label>
-            <input type="tel" placeholder="+91 98765 43210" required />
-          </div>
-          <div className="pg-field">
-            <label>Preferred Specialist</label>
+          <PgField>
+            <FieldLabel variant="soft">
+              Full Name <Required />
+            </FieldLabel>
+            <Input
+              variant="soft"
+              type="text"
+              placeholder="Your full name"
+              required
+            />
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">
+              Email Address <Required />
+            </FieldLabel>
+            <Input
+              variant="soft"
+              type="email"
+              placeholder="you@example.com"
+              required
+            />
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">
+              Phone Number <Required />
+            </FieldLabel>
+            <Input
+              variant="soft"
+              type="tel"
+              placeholder="+91 98765 43210"
+              required
+            />
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">Preferred Specialist</FieldLabel>
             <CareaiSelect
+              appearance="pg"
               ref={specialistRef}
               defaultValue=""
               placeholder="No preference — match me with the best fit"
@@ -243,12 +269,13 @@ export function PatientConsultExpertContent() {
                 })),
               ]}
             />
-          </div>
-          <div className="pg-field">
-            <label>
-              Specialty Needed <span className="pg-required">*</span>
-            </label>
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">
+              Specialty Needed <Required />
+            </FieldLabel>
             <CareaiSelect
+              appearance="pg"
               required
               defaultValue=""
               placeholder="Select a specialty"
@@ -256,14 +283,15 @@ export function PatientConsultExpertContent() {
                 label: "Select a specialty",
               })}
             />
-          </div>
-          <div className="pg-field">
-            <label>Preferred Date</label>
-            <CareaiDateField />
-          </div>
-          <div className="pg-field">
-            <label>Consultation Mode</label>
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">Preferred Date</FieldLabel>
+            <CareaiDateField appearance="pg" />
+          </PgField>
+          <PgField>
+            <FieldLabel variant="soft">Consultation Mode</FieldLabel>
             <CareaiSelect
+              appearance="pg"
               defaultValue="Video Call"
               options={careaiOptionsFromLabels([
                 "Video Call",
@@ -271,13 +299,16 @@ export function PatientConsultExpertContent() {
                 "In-Person",
               ])}
             />
-          </div>
-          <div className="pg-field full">
-            <label>Reason for Consultation</label>
-            <textarea placeholder="Briefly describe your symptoms or what you'd like to discuss" />
-          </div>
-          <div className="full">
-            <button className="pg-btn solid" type="submit">
+          </PgField>
+          <PgField className="col-span-full">
+            <FieldLabel variant="soft">Reason for Consultation</FieldLabel>
+            <Textarea
+              variant="soft"
+              placeholder="Briefly describe your symptoms or what you'd like to discuss"
+            />
+          </PgField>
+          <div className="col-span-full">
+            <PgSubmitButton>
               <svg
                 fill="none"
                 stroke="currentColor"
@@ -287,14 +318,14 @@ export function PatientConsultExpertContent() {
                 <path d="M8 7V3M16 7V3M3 11h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
               </svg>
               Request Consultation
-            </button>
+            </PgSubmitButton>
             <FormConfidentialNote>
               Your details are shared only with your assigned specialist and
               coordinator.
             </FormConfidentialNote>
           </div>
         </PgForm>
-      </div>
+      </PgSection>
     </>
   );
 }

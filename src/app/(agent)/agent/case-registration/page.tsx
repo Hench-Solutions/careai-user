@@ -4,6 +4,9 @@ import type { Metadata } from "next";
 
 import { AgentCrumbTopbar } from "@/components/portal/agent-crumb-topbar";
 import { RegistrationList } from "@/components/portal/agent-pages/RegistrationList";
+import { PageHeader } from "@/components/portal/page-header";
+import { PortalContent } from "@/components/portal/portal-content";
+import { RegistrationListSkeleton } from "@/components/portal/portal-loading-fallbacks";
 
 export const metadata: Metadata = {
   title: "Case Registration",
@@ -17,13 +20,15 @@ export default function AgentManageRegistrationPage({
   return (
     <>
       <AgentCrumbTopbar label="Case Registration" />
-      <div className="lm-content">
-        <h1 className="lm-h1">Case Registration</h1>
-        <p className="lm-sub">View and update the cases you have registered.</p>
-        <Suspense fallback={<p className="lm-sub">Loading registrations…</p>}>
+      <PortalContent>
+        <PageHeader
+          title="Case Registration"
+          subtitle="View and update the cases you have registered."
+        />
+        <Suspense fallback={<RegistrationListSkeleton />}>
           <RegistrationList searchParams={searchParams} />
         </Suspense>
-      </div>
+      </PortalContent>
     </>
   );
 }

@@ -14,16 +14,17 @@ export function ExistingDocuments({
 }) {
   if (documents.length === 0) return null;
   return (
-    <div className="mr-existing">
+    <div className="mt-2.5 text-[13.5px]">
       {heading ?
-        <b>{heading}</b>
+        <b className="mb-1 block text-xs text-care-sub">{heading}</b>
       : null}
-      <ul>
+      <ul className="m-0 grid list-none gap-1.5 p-0">
         {documents.map((doc) => (
-          <li key={doc.fileName}>
+          <li key={doc.fileName} className="flex flex-wrap gap-x-3.5 gap-y-0.5">
             <span>{doc.docNm}</span>
             <a
               href={leadDocumentUrl(claimNo, doc.fileName)}
+              className="font-semibold [overflow-wrap:anywhere] text-care-purple hover:underline"
               target="_blank"
               rel="noopener noreferrer"
             >

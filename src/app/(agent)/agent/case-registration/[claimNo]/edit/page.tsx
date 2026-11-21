@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 
 import { AgentCrumbTopbar } from "@/components/portal/agent-crumb-topbar";
 import { RegistrationEdit } from "@/components/portal/agent-pages/RegistrationEdit";
+import { PortalContent } from "@/components/portal/portal-content";
+import { RegistrationWizardSkeleton } from "@/components/portal/portal-loading-fallbacks";
 
 export const metadata: Metadata = {
   title: "Edit registration",
@@ -17,11 +19,11 @@ export default function AgentRegistrationEditPage({
   return (
     <>
       <AgentCrumbTopbar label="Case Registration" />
-      <div className="lm-content case-registration-page">
-        <Suspense fallback={<p className="lm-sub">Loading registration…</p>}>
+      <PortalContent wizard>
+        <Suspense fallback={<RegistrationWizardSkeleton />}>
           <RegistrationEdit params={params} />
         </Suspense>
-      </div>
+      </PortalContent>
     </>
   );
 }

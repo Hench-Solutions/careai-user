@@ -55,3 +55,22 @@ export async function getCurrentUser(): Promise<SessionUser> {
   if (!user) redirect(BFF_ENDPOINTS.auth.expired);
   return user;
 }
+
+/** Same as `getCurrentUser`, but returns null when there is no valid session (no redirect). */
+export async function getOptionalCurrentUser(): Promise<SessionUser | null> {
+  const token = (await cookies()).get(PORTAL_TOKEN_COOKIE)?.value;
+  if (!token) return null;
+
+  try {
+    const res = await fetch(`${apiBaseUrl()}${API_ENDPOINTS.auth.portalMe}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (res.status === 401 || res.status === 403 || !res.ok) return null;
+
+    const body = (await res.json()) as ApiEnvelope<PortalProfile>;
+    return body.responseObj ? toSessionUser(body.responseObj) : null;
+  } catch {
+    return null;
+  }
+}

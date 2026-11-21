@@ -1,3 +1,23 @@
+import { cn } from "@/lib/utils";
+
+const portalCaseTracker = {
+  line: (done: boolean, isLast: boolean) =>
+    cn(
+      "absolute top-3.5 left-1/2 z-[1] h-[3px] w-full bg-[#eeebf6]",
+      isLast && "hidden",
+      done && "bg-care-grad",
+    ),
+  dot: (state: "done" | "current" | "pending") =>
+    cn(
+      "z-[2] flex size-7 items-center justify-center rounded-full border-[3px] border-[#eeebf6] bg-[#eeebf6]",
+      state === "done" &&
+        "border-care-purple bg-care-grad [&_svg]:size-[13px] [&_svg]:text-white",
+      state === "current" && "border-care-purple bg-white",
+    ),
+  label: (active: boolean) =>
+    cn("text-xs font-bold text-[#b3acc7]", active && "text-care-ink"),
+} as const;
+
 type AgentCaseTrackerProps = {
   /** 1 = Registered, 4 = all stages complete (Closed). */
   currentStage: number;
@@ -39,24 +59,27 @@ export function AgentCaseTracker({ currentStage }: AgentCaseTrackerProps) {
         return (
           <div
             key={label}
-            className={
-              state === "done" ? "cs-tstep done"
-              : state === "current" ?
-                "cs-tstep current"
-              : "cs-tstep"
-            }
+            className="relative flex flex-1 flex-col items-center gap-2 text-center"
           >
             {!isLast ?
-              <div className="cs-tline" />
+              <div
+                className={portalCaseTracker.line(state === "done", isLast)}
+              />
             : null}
-            <div className="cs-tdot">
+            <div className={portalCaseTracker.dot(state)}>
               {state === "done" ?
                 <CheckIcon />
               : state === "current" ?
-                <div className="dotinner" />
+                <div className="size-[9px] rounded-full bg-care-purple" />
               : null}
             </div>
-            <div className="cs-tlabel">{label}</div>
+            <div
+              className={portalCaseTracker.label(
+                state === "done" || state === "current",
+              )}
+            >
+              {label}
+            </div>
           </div>
         );
       })}

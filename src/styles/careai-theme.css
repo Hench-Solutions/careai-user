@@ -2,11 +2,17 @@
  * CareAI design tokens — use with Tailwind utilities (bg-care-purple, text-care-sub, etc.).
  */
 @theme inline {
+  --text-xs--line-height: 1.5;
+  --text-sm--line-height: 1.5;
+  --text-base--line-height: 1.5;
+  --text-lg--line-height: 1.5;
+  --text-xl--line-height: 1.5;
+  --text-2xl--line-height: 1.5;
+  --text-3xl--line-height: 1.5;
   --font-care: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
   --font-care-login: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
   --color-care-purple: #6b2fd9;
-  --color-care-purple-dark: #4c1d95;
   --color-care-pink: #d6238c;
   --color-care-coral: #e8774a;
   --color-care-blue: #2b8fe0;
@@ -21,7 +27,6 @@
   --color-care-nav-muted: #b3acc7;
   --color-care-nav-ink: #5b5670;
   --color-care-search: #9c97ac;
-  --color-care-success: #10b981;
   --color-care-nav-hover: #f7f1fe;
   --color-care-control-hover: #eeebf6;
 
@@ -58,6 +63,16 @@
   --shadow-login-field-focus: 0 0 0 3px rgb(102 126 234 / 0.1);
   --shadow-login-submit: 0 4px 16px rgb(102 126 234 / 0.36);
   --shadow-login-submit-hover: 0 8px 24px rgb(102 126 234 / 0.42);
+
+  --background-image-care-grad: linear-gradient(
+    135deg,
+    var(--color-care-purple) 0%,
+    var(--color-care-pink) 100%
+  );
+  --shadow-portal-primary-btn: 0 8px 18px rgb(214 35 140 / 0.28);
+  --shadow-portal-select-menu: 0 12px 32px rgb(63 59 82 / 0.12);
+  --shadow-portal-wizard-steps: 0 10px 30px rgb(107 47 217 / 0.16);
+  --shadow-portal-wizard-form: 0 10px 30px rgb(107 47 217 / 0.1);
 
   --color-login-role-hover-border: #c7d2fe;
   --color-login-role-hover-bg: #f5f6ff;

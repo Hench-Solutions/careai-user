@@ -11,9 +11,15 @@ import {
   getAgentNavSections,
   getPatientNavSections,
 } from "@/config/portal-navigation";
-import { careaiPortal } from "@/lib/careai/classes";
 import { urbanist } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
+
+const backdropClass = (show: boolean) =>
+  cn(
+    "lm-backdrop hidden",
+    show &&
+      "max-[900px]:fixed max-[900px]:inset-0 max-[900px]:z-[49] max-[900px]:block max-[900px]:bg-[rgba(26,26,46,0.4)]",
+  );
 
 const PORTALS = {
   agent: {
@@ -35,7 +41,6 @@ export function PortalShell({
 }) {
   const pathname = usePathname();
   const { getSections, footerRole } = PORTALS[portal];
-  // The phone menu is open only on the page it was opened on, so choosing a link closes it.
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const navOpen = openedOn === pathname;
 
@@ -52,13 +57,13 @@ export function PortalShell({
     <div
       className={cn(
         urbanist.variable,
-        careaiPortal.root,
+        "careai-portal box-border flex min-h-dvh bg-care-bg font-[family-name:var(--font-urbanist),Urbanist,ui-sans-serif,system-ui,sans-serif] text-care-ink [&_*]:box-border [&_*::after]:box-border [&_*::before]:box-border [&_button]:font-[inherit] [&_input]:font-[inherit] [&_select]:font-[inherit] [&_textarea]:font-[inherit]",
         `careai-portal--${portal}`,
       )}
     >
       <button
         type="button"
-        className="lm-menu-btn"
+        className="lm-menu-btn hidden cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-care-purple max-[900px]:fixed max-[900px]:top-3 max-[900px]:left-3 max-[900px]:z-[45] max-[900px]:flex max-[900px]:size-[42px] max-[900px]:items-center max-[900px]:justify-center max-[900px]:rounded-xl max-[900px]:border max-[900px]:border-care-line max-[900px]:bg-white max-[900px]:text-care-purple max-[900px]:shadow-care"
         aria-label="Open menu"
         aria-expanded={navOpen}
         aria-controls="portal-nav"
@@ -67,7 +72,7 @@ export function PortalShell({
         <Menu aria-hidden size={20} />
       </button>
       <div
-        className={cn("lm-backdrop", navOpen && "show")}
+        className={backdropClass(navOpen)}
         onClick={() => setOpenedOn(null)}
         aria-hidden
       />
@@ -79,7 +84,9 @@ export function PortalShell({
         sections={getSections(pathname)}
         footerRole={footerRole}
       />
-      <main className={careaiPortal.main}>{children}</main>
+      <main className="lm-main ml-[260px] min-w-0 flex-1 max-[900px]:ml-0">
+        {children}
+      </main>
     </div>
   );
 }

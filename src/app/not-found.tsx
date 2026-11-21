@@ -1,22 +1,20 @@
-import Link from "next/link";
-
+import { CareaiErrorPage } from "@/components/careai/careai-error-page";
+import { dashboardPathForRole, roleLabels } from "@/config/auth";
 import { ROUTES } from "@/config/routes";
+import { getOptionalCurrentUser } from "@/server/session";
 
-export default function NotFound() {
+export default async function NotFound() {
+  const user = await getOptionalCurrentUser();
+
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-care-bg px-6 text-center font-care text-care-ink">
-      <p className="text-sm font-semibold text-care-sub">404</p>
-      <h1 className="text-2xl font-extrabold tracking-tight">Page not found</h1>
-      <p className="max-w-sm text-sm text-care-sub">
-        We couldn&apos;t find that page. It may have been moved or the link is
-        out of date.
-      </p>
-      <Link
-        href={ROUTES.login}
-        className="mt-2 cursor-pointer rounded-xl bg-linear-to-br from-care-purple to-care-pink px-5 py-2.5 text-sm font-bold text-white shadow-care"
-      >
-        Go to sign in
-      </Link>
-    </main>
+    <CareaiErrorPage
+      eyebrow="404"
+      title="Page not found"
+      description="We couldn't find that page. It may have been moved or the link is out of date."
+      backHref={user ? dashboardPathForRole(user.role) : ROUTES.login}
+      backLabel={
+        user ? `Go to ${roleLabels[user.role]} dashboard` : "Go to sign in"
+      }
+    />
   );
 }
