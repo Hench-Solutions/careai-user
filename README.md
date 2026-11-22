@@ -50,7 +50,8 @@ Open [http://localhost:3000](http://localhost:3000); it redirects to sign-in. Th
 ## Deploying
 
 - Serve over HTTPS: the cookie is `Secure` in production.
-- Set `CAREAI_API_URL` and `NEXT_PUBLIC_SITE_URL`, then build.
+- Set `CAREAI_API_URL` and `NEXT_PUBLIC_SITE_URL` in `.env.production` (kept out of git; copy the PROD block from `.env.example`), then run `npm run deploy`. It builds and collects the server into `./deploy`.
+- Node host (e.g. Azure App Service, Linux, Node 20 LTS or 22 LTS): upload the contents of `./deploy` to the site root, set the startup command to `node server.js`, and add the app settings `CAREAI_API_URL`, `NODE_ENV=production`, `PORT=8080` and `WEBSITES_PORT=8080`. Never upload `.next` on its own or a local `.env`.
 - More than one instance: set the same `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` on all of them.
 - Behind a proxy that rewrites the `Host` header: list the public host in `serverActions.allowedOrigins` (`next.config.ts`), or sign-in is rejected.
 

@@ -39,5 +39,5 @@
     "postcss.config.js",
     "prettier.config.js"
   ],
-  "exclude": ["node_modules", ".next"]
+  "exclude": ["node_modules", ".next", "deploy"]
 }

@@ -53,6 +53,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Self-contained server build for hosts that run `node server.js` (see README, Deploying).
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   // Always-on React Compiler; Rust path via Turbopack when available.
