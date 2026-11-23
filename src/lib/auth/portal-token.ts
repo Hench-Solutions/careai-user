@@ -9,10 +9,7 @@ type PortalTokenClaims = {
   exp: number;
 };
 
-/**
- * Reads the role and expiry from the portal token WITHOUT verifying its signature: this app holds
- * no signing key. Use it only to route the visitor; the API validates the token on every call.
- */
+/** Decode only — no signature check (routing). */
 export function readPortalToken(
   token: string | undefined,
 ): PortalTokenClaims | null {

@@ -29,5 +29,8 @@ export const LOGIN_ID_FIELD: Record<
   { label: string; placeholder: string }
 > = {
   patient: { label: "Member ID", placeholder: "e.g. MEM261305002" },
-  facilitator: { label: "Agent ID", placeholder: "e.g. AG001" },
+  facilitator: {
+    label: "Agent ID or email",
+    placeholder: "e.g. AG001 or agent@example.com",
+  },
 };

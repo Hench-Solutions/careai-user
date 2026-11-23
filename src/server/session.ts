@@ -7,7 +7,11 @@ import type { ApiEnvelope } from "@/lib/api/client";
 import type { PortalProfile, SessionUser } from "@/lib/auth/user";
 
 import { API_ENDPOINTS, BFF_ENDPOINTS } from "@/config/api";
-import { PORTAL_TOKEN_COOKIE } from "@/config/portal-session";
+import {
+  cookieMaxAgeFromJwt,
+  PORTAL_COOKIE_MAX_AGE_FALLBACK_SEC,
+  PORTAL_TOKEN_COOKIE,
+} from "@/config/portal-session";
 import { apiBaseUrl } from "@/config/server-env";
 import { toSessionUser } from "@/lib/auth/user";
 
@@ -18,23 +22,19 @@ const baseCookie = {
   path: "/",
 };
 
-/** Session cookie only (no maxAge): cleared when the browser session ends, not after idle timeout. */
 export async function setPortalCookie(token: string) {
-  (await cookies()).set(PORTAL_TOKEN_COOKIE, token, baseCookie);
+  const maxAge =
+    cookieMaxAgeFromJwt(token) ?? PORTAL_COOKIE_MAX_AGE_FALLBACK_SEC;
+  (await cookies()).set(PORTAL_TOKEN_COOKIE, token, {
+    ...baseCookie,
+    maxAge,
+  });
 }
 
 export async function clearPortalCookie() {
   (await cookies()).delete(PORTAL_TOKEN_COOKIE);
 }
 
-/**
- * The signed-in user, asked of the API (`portal-me`) so a blocked or removed account is caught
- * here, not only when the token expires. The API owns the token; this app holds no key.
- *
- * Private cache: reused within a request and by the browser's router for a few minutes, never
- * stored on the server. A rejected token sends the visitor through the expiry route, which clears
- * the cookie (a render cannot) and avoids a redirect loop with the proxy.
- */
 export async function getCurrentUser(): Promise<SessionUser> {
   "use cache: private";
 

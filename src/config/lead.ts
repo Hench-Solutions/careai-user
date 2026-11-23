@@ -44,7 +44,11 @@ export const LEAD_UPLOAD_FIELDS = {
   claimNo: "claimNo",
   memberId: "memberId",
   idDocument: "idDocument",
+  idDocCd: "idDocCd",
+  idDocNm: "idDocNm",
   medicalReports: "medicalReports",
+  medicalDocCd: "medicalDocCd",
+  medicalDocNm: "medicalDocNm",
 } as const;
 
 export const LEAD_JSON_MAX_BYTES = 50_000;
@@ -126,6 +130,11 @@ export const LEAD_SEARCH_BY = [
 
 /** Document types of the ID proof and medical reports that the registration form uploads (the API's defaults). */
 export const LEAD_DOCUMENT_CODES = { id: "303", medical: "316" } as const;
+
+export const LEAD_UPLOAD_DOC_NAMES = {
+  id: "ID Document",
+  medical: "Medical Report",
+} as const;
 
 export const LEAD_MESSAGES = {
   required: (label: string) => `${label} is required`,

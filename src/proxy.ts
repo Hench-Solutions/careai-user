@@ -12,11 +12,6 @@ import { PORTAL_TOKEN_COOKIE } from "@/config/portal-session";
 import { ROUTES } from "@/config/routes";
 import { readPortalToken } from "@/lib/auth/portal-token";
 
-/**
- * Routing gate for the portals: an unexpired portal cookie opens /agent or /patient, each only for
- * its own user type. This is not security: the token is not verified here, the API validates it
- * on every call, so a forged cookie shows an empty page shell and nothing else.
- */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const cookie = request.cookies.get(PORTAL_TOKEN_COOKIE)?.value;

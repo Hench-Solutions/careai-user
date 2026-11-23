@@ -6,7 +6,12 @@ import type {
 } from "./lead.types";
 
 import { BFF_ENDPOINTS, MASTER_QUERY } from "@/config/api";
-import { LEAD_MESSAGES, LEAD_UPLOAD_FIELDS } from "@/config/lead";
+import {
+  LEAD_DOCUMENT_CODES,
+  LEAD_MESSAGES,
+  LEAD_UPLOAD_DOC_NAMES,
+  LEAD_UPLOAD_FIELDS,
+} from "@/config/lead";
 import { apiGet, apiPost, apiPostForm } from "@/lib/api/client";
 
 export function registerLead(
@@ -32,16 +37,41 @@ export function uploadLeadDocuments(input: {
   claimNo: string;
   memberId: string;
   idDocument?: File | null;
+  idDocCd?: number | string;
+  idDocNm?: string;
   medicalReports?: FileList | File[] | null;
+  medicalDocCd?: number | string;
+  medicalDocNm?: string;
 }): Promise<LeadUploadDocumentsResult> {
   const form = new FormData();
   form.set(LEAD_UPLOAD_FIELDS.claimNo, input.claimNo);
   form.set(LEAD_UPLOAD_FIELDS.memberId, input.memberId);
-  if (input.idDocument) {
+  const medical = Array.from(input.medicalReports ?? []).filter(
+    (file) => file.size > 0,
+  );
+  if (input.idDocument && input.idDocument.size > 0) {
     form.set(LEAD_UPLOAD_FIELDS.idDocument, input.idDocument);
+    form.set(
+      LEAD_UPLOAD_FIELDS.idDocCd,
+      String(input.idDocCd ?? LEAD_DOCUMENT_CODES.id),
+    );
+    form.set(
+      LEAD_UPLOAD_FIELDS.idDocNm,
+      input.idDocNm ?? LEAD_UPLOAD_DOC_NAMES.id,
+    );
   }
-  for (const file of Array.from(input.medicalReports ?? [])) {
-    form.append(LEAD_UPLOAD_FIELDS.medicalReports, file);
+  if (medical.length > 0) {
+    form.set(
+      LEAD_UPLOAD_FIELDS.medicalDocCd,
+      String(input.medicalDocCd ?? LEAD_DOCUMENT_CODES.medical),
+    );
+    form.set(
+      LEAD_UPLOAD_FIELDS.medicalDocNm,
+      input.medicalDocNm ?? LEAD_UPLOAD_DOC_NAMES.medical,
+    );
+    for (const file of medical) {
+      form.append(LEAD_UPLOAD_FIELDS.medicalReports, file);
+    }
   }
   return apiPostForm<LeadUploadDocumentsResult>(
     BFF_ENDPOINTS.lead.uploadDocuments,

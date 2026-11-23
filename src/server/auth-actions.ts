@@ -87,7 +87,6 @@ export async function signUpAction(
   };
 }
 
-/** Drops the cookie. The token is short-lived and cannot be revoked earlier. */
 export async function signOutAction(): Promise<void> {
   await clearPortalCookie();
 }

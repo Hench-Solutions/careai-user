@@ -24,10 +24,8 @@ export const API_ENDPOINTS = {
   },
 } as const;
 
-/** The web app's own same-origin routes the browser calls (they hold the token, the browser never does). */
 export const BFF_ENDPOINTS = {
   auth: {
-    /** Clears a rejected session cookie, then sends the visitor to the login page. */
     expired: "/api/auth/expired",
   },
   lead: {
