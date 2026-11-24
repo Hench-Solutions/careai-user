@@ -8,16 +8,16 @@ CareAi .NET API used by the agent portal. Full schemas: Swagger at the API root 
 
 ## Screens → endpoints
 
-| Screen | Calls |
-| ------ | ----- |
-| Sign in | `POST /Auth/portal-login` |
-| Session | `GET /Auth/portal-me` |
-| Patient sign up | `POST /Auth/patient-signup` |
-| Dashboard, Case Status, Action Required, registration list | `GET /PortalLead/search` |
-| Upload / edit case | `GET /PortalLead/{claimNo}`, `POST /PortalLead/upload-documents`, `POST /PortalLead/update` |
-| New case | `POST /PortalLead/register`, then upload |
-| File download | `GET /PortalLead/document?claimNo=&fileName=` |
-| Form dropdowns | `GET /PortalMaster/dropdown`, `GET /Master/items`, `GET /Master/code-search` |
+| Screen                                                     | Calls                                                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Sign in                                                    | `POST /Auth/portal-login`                                                                   |
+| Session                                                    | `GET /Auth/portal-me`                                                                       |
+| Patient sign up                                            | `POST /Auth/patient-signup`                                                                 |
+| Dashboard, Case Status, Action Required, registration list | `GET /PortalLead/search`                                                                    |
+| Upload / edit case                                         | `GET /PortalLead/{claimNo}`, `POST /PortalLead/upload-documents`, `POST /PortalLead/update` |
+| New case                                                   | `POST /PortalLead/register`, then upload                                                    |
+| File download                                              | `GET /PortalLead/document?claimNo=&fileName=`                                               |
+| Form dropdowns                                             | `GET /PortalMaster/dropdown`, `GET /Master/items`, `GET /Master/code-search`                |
 
 Referral & Invoice and patient-only demo pages: no API.
 
@@ -129,7 +129,7 @@ Search row fields plus full registration codes and names, and `documents[]`. HTT
 
 **Validation:** name, `EmailId`, and `DocumentNo` max 50 characters; `CallingCd` like `+91`; `MobileNo` digits only, max 10; `Dob` a past date (`yyyy-MM-dd`). Code fields use dropdown `value`s from the form lists below.
 
-`AgentCd` and `Source` (`SR0001`) come from the token; client values for those fields are ignored. `InsurerCd` is filled from the token when empty; when sent, it must equal the signed-in agent or the API returns `errorCode` **644** (*InsurerCd must match the signed-in agent.*).
+`AgentCd` and `Source` (`SR0001`) come from the token; client values for those fields are ignored. `InsurerCd` is filled from the token when empty; when sent, it must equal the signed-in agent or the API returns `errorCode` **644** (_InsurerCd must match the signed-in agent._).
 
 ```json
 { "member_Id": "MEM26270107", "claim_No": "TID262700107" }
@@ -193,7 +193,7 @@ Same shape as register, with `ClaimNo` set. Allowed only while the lead's `statu
 }
 ```
 
-`claimNo` and `memberId` come from the register response. `idDocument` is optional when medical files are included; `idDocCd` and `idDocNm` are required when `idDocument` is sent (`idDocCd` > 0). `medicalDocCd` and `medicalDocNm` are required when any `medicalReports` file is sent (`medicalDocCd` > 0). Portal defaults: `303` / `ID Document`, `316` / `Medical Report`.
+`claimNo` and `memberId` come from the register response. `idDocument` is optional when medical files are included; `idDocCd` and `idDocNm` are required when `idDocument` is sent (`idDocCd` > 0). `medicalDocCd` and `medicalDocNm` are required when any `medicalReports` file is sent (`medicalDocCd` > 0). Portal defaults: `303` / `ID Document`, `316` / `Medical Report`. These are the document categories (fixed values); they are not the `DocumentType` code in the register body (`DT0001` = Passport and so on), which says which ID the patient holds.
 
 Allowed types: `.pdf .jpg .jpeg .png .doc .docx`; max 10 MB per file; files must be non-empty. At least one of `idDocument` or `medicalReports` is required. Case must belong to the agent (`claimNo` / `memberId` match).
 
@@ -209,19 +209,19 @@ Returns the file (not JSON). `404` if the file is not on that agent's case.
 
 Responses are `{ "value", "text" }[]`; send `value` in register/update.
 
-| Endpoint | Use |
-| -------- | --- |
-| `GET /PortalMaster/dropdown?mode=ddlNationality` | Nationality |
-| `GET /PortalMaster/dropdown?mode=ddlPatientLocation` | Patient location |
-| `GET /PortalMaster/dropdown?mode=ddlProvider` | Hospitals |
-| `GET /PortalMaster/dropdown?mode=ddlDocumentType&filterId=LEAD_ID` | ID document types |
-| `GET /PortalMaster/dropdown?mode=DrpBranch&filterId=<hospital>` | Branches |
-| `GET /PortalMaster/dropdown?mode=drpDoctor&filterId=<hospital>` | Doctors |
-| `GET /PortalMaster/dropdown?mode=drpGuarantor&filterId=<payment mode>` | Guarantors |
-| `GET /Master/items?itemType=Gender` | Gender |
-| `GET /Master/items?itemType=TreatmentType` | Treatment types |
-| `GET /Master/items?itemType=ProviderDepartment&filterId=<treatment>` | Departments |
-| `GET /Master/items?itemType=PaymentMode` | Payment modes |
+| Endpoint                                                               | Use               |
+| ---------------------------------------------------------------------- | ----------------- |
+| `GET /PortalMaster/dropdown?mode=ddlNationality`                       | Nationality       |
+| `GET /PortalMaster/dropdown?mode=ddlPatientLocation`                   | Patient location  |
+| `GET /PortalMaster/dropdown?mode=ddlProvider`                          | Hospitals         |
+| `GET /PortalMaster/dropdown?mode=ddlDocumentType&filterId=LEAD_ID`     | ID document types |
+| `GET /PortalMaster/dropdown?mode=DrpBranch&filterId=<hospital>`        | Branches          |
+| `GET /PortalMaster/dropdown?mode=drpDoctor&filterId=<hospital>`        | Doctors           |
+| `GET /PortalMaster/dropdown?mode=drpGuarantor&filterId=<payment mode>` | Guarantors        |
+| `GET /Master/items?itemType=Gender`                                    | Gender            |
+| `GET /Master/items?itemType=TreatmentType`                             | Treatment types   |
+| `GET /Master/items?itemType=ProviderDepartment&filterId=<treatment>`   | Departments       |
+| `GET /Master/items?itemType=PaymentMode`                               | Payment modes     |
 
 `GET /PortalMaster/dropdown` requires the agent token; `GET /Master/items` does not.
 
@@ -231,12 +231,12 @@ Responses are `{ "value", "text" }[]`; send `value` in register/update.
 
 ## Case status (`statusGrp`)
 
-| Step | `statusGrp` |
-| ---- | ----------- |
-| Registration (agent may edit) | 301 |
-| Estimate | 304 |
-| Travel & Appointment | 318 |
-| Treatment | 322 |
-| Discharge & Claim | 324, 330 |
+| Step                          | `statusGrp` |
+| ----------------------------- | ----------- |
+| Registration (agent may edit) | 301         |
+| Estimate                      | 304         |
+| Travel & Appointment          | 318         |
+| Treatment                     | 322         |
+| Discharge & Claim             | 324, 330    |
 
 `statusCd` **329** (Claim Submitted) is closed: omitted from Case Status, counted on the Dashboard.

@@ -41,7 +41,7 @@ Open [http://localhost:3000](http://localhost:3000); it redirects to sign-in. Th
 - **Sign-in.** Agents sign in with their Agent ID and patients with their Member ID. Sign-in is a Server Action that stores the API's token in an httpOnly cookie; the browser never sees the token.
 - **No signing key here.** The API issues and validates the token on every call. `src/proxy.ts` only redirects visitors without a cookie to `/login`. The portal layout asks the API who the user is (`src/server/session.ts`) and shows a portal only to its own user type.
 - **API access.** The browser calls this app's own routes (`src/app/api/*`), which forward to the API with the cookie as a Bearer token. Paths, query names, limits and messages live in `src/config`.
-- **Sessions** last 60 minutes and are not refreshed; an expired session goes back to the login page.
+- **Sessions** last as long as the API token (`JwtExpiryMinutes`, 1440 = 24 hours in the checked-in config) and are not refreshed; an expired session goes back to the login page.
 
 ## API reference
 
