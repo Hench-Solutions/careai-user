@@ -22,6 +22,7 @@ export const LEAD_FIELDS = [
   "DocumentType",
   "DocumentNo",
   "Source",
+  "InsurerCd",
   "TreatmentType",
   "Department",
   "ProviderCd",

@@ -1,42 +1,37 @@
-# Which API each screen uses
+# Portal API reference
 
-The CareAi .NET API calls behind each portal screen, with a sample request and response for each. The full schemas are in Swagger (the API root `/`).
+CareAi .NET API used by the agent portal. Full schemas: Swagger at the API root (`/`).
 
-- **Base URL:** the API address, with no `/v1`.
-- **Auth:** `Authorization: Bearer <token>` from sign in. The token lasts 60 minutes; sign in again on `401`.
-- **Responses:** every reply is `{ "responseObj": ..., "errorObj": [{ "errorCode", "errorMessage" }] }`. The samples below show `responseObj`; the codes and names in them are examples. `204` means no rows.
-- Agents only ever see their own cases.
+- **Base URL:** host only (no `/v1` prefix on these routes).
+- **Auth:** `Authorization: Bearer <token>` from `POST /Auth/portal-login`. Token lifetime is `AppSettings:JwtExpiryMinutes` (**1440** = 24 hours); login returns `expires_At`. Sign in again on `401`. The CareAi portal web keeps the token in an httpOnly cookie whose `max-age` matches the JWT `exp` claim; other clients send the Bearer header directly.
+- **Envelope:** `{ "responseObj", "errorObj": [{ "errorCode", "errorMessage" }] }`. Samples show `responseObj` only. `errorCode` **1** (no records) maps to HTTP `204`.
 
-## Screens and the API they use
+## Screens → endpoints
 
-| Screen                   | API                                                                  | Purpose                                                                                                                                               |
-| ------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sign in                  | `POST /Auth/portal-login`                                            | Log in as `AGENT` or `PATIENT`; returns the token                                                                                                     |
-| Any page                 | `GET /Auth/portal-me`                                                | Check the session is valid and get the user's name                                                                                                    |
-| Patient sign up          | `POST /Auth/patient-signup`                                          | Create a patient account                                                                                                                              |
-| Dashboard                | `GET /PortalLead/search`                                             | Get the agent's cases, then count total, active and closed (closed = `statusCd` 329), list what needs action, and search them                         |
-| Case Status              | `GET /PortalLead/search`                                             | Get the agent's cases and show the open ones by step (see the last table)                                                                             |
-| Action Required          | `GET /PortalLead/search`                                             | Same list: a case needs action if a document code is missing from `documentCds` (ID = 303, medical report = 316) or its `statusCd` is 302, 305 or 310 |
-| Upload documents         | `GET /PortalLead/{claimNo}`, `POST /PortalLead/upload-documents`     | Add the missing ID document or medical reports to a case                                                                                              |
-| Case Registration (list) | `GET /PortalLead/search?searchBy=&searchVal=`                        | List and search cases                                                                                                                                 |
-| New registration         | `POST /PortalLead/register`                                          | Create the case                                                                                                                                       |
-|                          | `POST /PortalLead/upload-documents`                                  | Attach the ID document and medical reports                                                                                                            |
-| Edit registration        | `GET /PortalLead/{claimNo}`                                          | Load one case to fill the form                                                                                                                        |
-|                          | `POST /PortalLead/update`                                            | Save changes (only while the case is still at Registration)                                                                                           |
-|                          | `GET /PortalLead/document?claimNo=&fileName=`                        | Open an uploaded file                                                                                                                                 |
-| Registration form lists  | `GET /PortalMaster/dropdown`, `/Master/items`, `/Master/code-search` | Fill the form's dropdowns and code search                                                                                                             |
+| Screen | Calls |
+| ------ | ----- |
+| Sign in | `POST /Auth/portal-login` |
+| Session | `GET /Auth/portal-me` |
+| Patient sign up | `POST /Auth/patient-signup` |
+| Dashboard, Case Status, Action Required, registration list | `GET /PortalLead/search` |
+| Upload / edit case | `GET /PortalLead/{claimNo}`, `POST /PortalLead/upload-documents`, `POST /PortalLead/update` |
+| New case | `POST /PortalLead/register`, then upload |
+| File download | `GET /PortalLead/document?claimNo=&fileName=` |
+| Form dropdowns | `GET /PortalMaster/dropdown`, `GET /Master/items`, `GET /Master/code-search` |
 
-Referral & Invoice and the patient portal pages use demo data and call no API.
+Referral & Invoice and patient-only demo pages: no API.
 
-## Sample requests and responses
+`PortalLead` routes scope data to the signed-in agent: stored leads use `Source` = `SR0001` and `Insurer_Cd` equal to the agent code from the token. Another agent's `claimNo` returns no records; document upload returns `404`.
 
-### Sign in: `POST /Auth/portal-login`
+## Endpoints
+
+### `POST /Auth/portal-login`
 
 ```json
 { "User_Type": "AGENT", "Login_Id": "AG001", "Password": "••••••" }
 ```
 
-`User_Type` is `AGENT` (login id = agent code) or `PATIENT` (login id = member id).
+`User_Type`: `AGENT` or `PATIENT`. For agents, `Login_Id` is `Agent_Cd` or `Email_Id` (trimmed match on `MT_Agent`). For patients, `Login_Id` is `Member_Id`.
 
 ```json
 {
@@ -51,11 +46,11 @@ Referral & Invoice and the patient portal pages use demo data and call no API.
 }
 ```
 
-### Session: `GET /Auth/portal-me`
+### `GET /Auth/portal-me`
 
-No body. Returns the same fields as above without `token` and `expires_At`. `401` means the token is invalid or expired.
+Same profile fields as login, without `token` or `expires_At`.
 
-### Patient sign up: `POST /Auth/patient-signup`
+### `POST /Auth/patient-signup`
 
 ```json
 {
@@ -65,11 +60,11 @@ No body. Returns the same fields as above without `token` and `expires_At`. `401
 }
 ```
 
-Response: the same profile fields; `user_Cd` is the new login id (member id).
+Response: profile fields; `user_Cd` is the new `Member_Id`.
 
-### List cases: `GET /PortalLead/search`
+### `GET /PortalLead/search`
 
-Query: `searchBy` = `Name` | `Email_Id` | `Member_Id`, `searchVal` = text (empty lists all).
+Query: `searchBy` = `Name` | `Email_Id` | `Member_Id`, `searchVal` (empty = all agent leads).
 
 ```json
 [
@@ -90,33 +85,13 @@ Query: `searchBy` = `Name` | `Email_Id` | `Member_Id`, `searchVal` = text (empty
 ]
 ```
 
-### One case: `GET /PortalLead/{claimNo}`
+Portal UI treats `statusCd` 329 as closed, flags cases needing action when `documentCds` lacks `303` or `316` or `statusCd` is 302, 305, or 310.
 
-Returns the search fields plus every registration field as a code and its name, and the uploaded documents:
+### `GET /PortalLead/{claimNo}`
 
-```json
-{
-  "claimNo": "TID262700107",
-  "memberId": "MEM26270107",
-  "firstName": "Asha",
-  "gender": "F",
-  "nationality": "IN",
-  "nationalityNm": "India",
-  "treatmentType": "TT01",
-  "treatmentTypeNm": "Cardiology",
-  "providerCd": "PRV01",
-  "providerNm": "NEO Hospital",
-  "statusNm": "Registration",
-  "statusGrp": "301",
-  "documents": [
-    { "docNm": "ID Document", "fileName": "passport.pdf", "docCd": "303" }
-  ]
-}
-```
+Search row fields plus full registration codes and names, and `documents[]`. HTTP `204` when the claim is missing or not owned by this agent.
 
-`204` when the case does not exist or belongs to another agent.
-
-### Register: `POST /PortalLead/register`
+### `POST /PortalLead/register`
 
 ```json
 {
@@ -129,6 +104,7 @@ Returns the search fields plus every registration field as a code and its name, 
   "CallingCd": "+91",
   "MobileNo": "9876543210",
   "LeadType": "Normal",
+  "InsurerCd": "AG001",
   "PatientLocation": "IN",
   "DocumentType": "303",
   "DocumentNo": "P1234567",
@@ -149,83 +125,74 @@ Returns the search fields plus every registration field as a code and its name, 
 }
 ```
 
-- **Required:** `FirstName`, `Gender`, `CallingCd`, `PatientLocation`, `DocumentType`, `DocumentNo`, `TreatmentType`, `PaymentMode`. The others are optional (`MiddleName` also exists).
-- **Rules:** names, `EmailId` and `DocumentNo` at most 50 characters; `CallingCd` like `+91`; `MobileNo` digits only, up to 10; `Dob` a past date `yyyy-MM-dd`.
-- **Codes:** the values for gender, location, treatment and so on come from the form lists below.
+**Required:** `FirstName`, `Gender`, `CallingCd`, `PatientLocation`, `DocumentType`, `DocumentNo`, `TreatmentType`, `PaymentMode` (`MiddleName` optional).
+
+**Validation:** name, `EmailId`, and `DocumentNo` max 50 characters; `CallingCd` like `+91`; `MobileNo` digits only, max 10; `Dob` a past date (`yyyy-MM-dd`). Code fields use dropdown `value`s from the form lists below.
+
+`AgentCd` and `Source` (`SR0001`) come from the token; client values for those fields are ignored. `InsurerCd` is filled from the token when empty; when sent, it must equal the signed-in agent or the API returns `errorCode` **644** (*InsurerCd must match the signed-in agent.*).
 
 ```json
 { "member_Id": "MEM26270107", "claim_No": "TID262700107" }
 ```
 
-### Update: `POST /PortalLead/update`
+### `POST /PortalLead/update`
 
-The same body as register, plus `"ClaimNo": "TID262700107"`. Response is the same as register.
+Same JSON body as register plus `"ClaimNo"`. Allowed only while the lead's `statusGrp` is `301`.
 
-### Upload documents: `POST /PortalLead/upload-documents`
+### `POST /PortalLead/upload-documents`
 
-`multipart/form-data`:
+`multipart/form-data`. Field names match `UploadDocumentsRequest` (camelCase).
 
-| Field            | Value                     |
-| ---------------- | ------------------------- |
-| `claimNo`        | `claim_No` from register  |
-| `memberId`       | `member_Id` from register |
-| `idDocument`     | one file                  |
-| `medicalReports` | any number of files       |
+| Field | Notes |
+| ----- | ----- |
+| `claimNo`, `memberId` | From register response |
+| `idDocument` | Optional if medical files are included |
+| `idDocCd`, `idDocNm` | Required when `idDocument` is sent (`idDocCd` > 0); portal uses `303` and `ID Document` by default |
+| `medicalReports` | One or more files |
+| `medicalDocCd`, `medicalDocNm` | Required when any medical file is sent (`medicalDocCd` > 0); portal uses `316` and `Medical Report` by default |
 
-Files: `.pdf .jpg .jpeg .png .doc .docx`, at most 10 MB each, not empty.
+Allowed types: `.pdf .jpg .jpeg .png .doc .docx`; max 10 MB per file; files must be non-empty. At least one of `idDocument` or `medicalReports` is required. Case must belong to the agent (`claimNo` / `memberId` match).
 
 ```json
 { "uploaded": ["passport.pdf"], "errors": [] }
 ```
 
-### Download a file: `GET /PortalLead/document?claimNo=&fileName=`
+### `GET /PortalLead/document?claimNo=&fileName=`
 
-Returns the file itself (not JSON). `404` if the file is not on that case.
+Returns the file (not JSON). `404` if the file is not on that agent's case.
 
 ### Form lists
 
-All return a list of `{ "value", "text" }`. Send `value` in the case.
+Responses are `{ "value", "text" }[]`; send `value` in register/update.
 
-| API                                                                       | Gives                           |
-| ------------------------------------------------------------------------- | ------------------------------- |
-| `GET /PortalMaster/dropdown?mode=ddlNationality`                          | Nationalities                   |
-| `GET /PortalMaster/dropdown?mode=ddlPatientLocation`                      | Patient locations               |
-| `GET /PortalMaster/dropdown?mode=ddlProvider`                             | Hospitals                       |
-| `GET /PortalMaster/dropdown?mode=ddlDocumentType&filterId=LEAD_ID`        | ID document types               |
-| `GET /PortalMaster/dropdown?mode=DrpBranch&filterId=<hospital>`           | Branches of a hospital          |
-| `GET /PortalMaster/dropdown?mode=drpDoctor&filterId=<hospital>`           | Doctors of a hospital           |
-| `GET /PortalMaster/dropdown?mode=drpGuarantor&filterId=<payment mode>`    | Guarantors for a payment mode   |
-| `GET /Master/items?itemType=Gender`                                       | Genders                         |
-| `GET /Master/items?itemType=TreatmentType`                                | Treatment types                 |
-| `GET /Master/items?itemType=ProviderDepartment&filterId=<treatment type>` | Departments of a treatment type |
-| `GET /Master/items?itemType=PaymentMode`                                  | Payment modes                   |
+| Endpoint | Use |
+| -------- | --- |
+| `GET /PortalMaster/dropdown?mode=ddlNationality` | Nationality |
+| `GET /PortalMaster/dropdown?mode=ddlPatientLocation` | Patient location |
+| `GET /PortalMaster/dropdown?mode=ddlProvider` | Hospitals |
+| `GET /PortalMaster/dropdown?mode=ddlDocumentType&filterId=LEAD_ID` | ID document types |
+| `GET /PortalMaster/dropdown?mode=DrpBranch&filterId=<hospital>` | Branches |
+| `GET /PortalMaster/dropdown?mode=drpDoctor&filterId=<hospital>` | Doctors |
+| `GET /PortalMaster/dropdown?mode=drpGuarantor&filterId=<payment mode>` | Guarantors |
+| `GET /Master/items?itemType=Gender` | Gender |
+| `GET /Master/items?itemType=TreatmentType` | Treatment types |
+| `GET /Master/items?itemType=ProviderDepartment&filterId=<treatment>` | Departments |
+| `GET /Master/items?itemType=PaymentMode` | Payment modes |
 
-```json
-[{ "value": "IN", "text": "India" }]
-```
+`GET /PortalMaster/dropdown` requires the agent token; `GET /Master/items` does not.
 
-`/PortalMaster/dropdown` needs the agent token; `/Master/items` needs none.
+### `GET /Master/code-search?type=ICD&q=hypertension`
 
-### Code search: `GET /Master/code-search?type=ICD&q=hypertension`
+`type` is `ICD` or `CPT`; `q` up to 50 characters. Returns `[{ "cd", "nm" }]`. Map to `IcdCode` / `IcdDesc` or `CptCode` / `CptDesc` on the case body.
 
-`type` is `ICD` or `CPT`; `q` is up to 50 characters. No token needed.
+## Case status (`statusGrp`)
 
-```json
-[{ "cd": "I10", "nm": "Essential hypertension" }]
-```
+| Step | `statusGrp` |
+| ---- | ----------- |
+| Registration (agent may edit) | 301 |
+| Estimate | 304 |
+| Travel & Appointment | 318 |
+| Treatment | 322 |
+| Discharge & Claim | 324, 330 |
 
-Send `cd` as `IcdCode` / `CptCode` and `nm` as `IcdDesc` / `CptDesc`.
-
-## Case status steps
-
-From the case's `statusGrp`:
-
-| Step                 | `statusGrp`                            |
-| -------------------- | -------------------------------------- |
-| Registration         | 301 (the only group an agent can edit) |
-| Estimate             | 304                                    |
-| Travel & Appointment | 318                                    |
-| Treatment            | 322                                    |
-| Discharge & Claim    | 324, 330                               |
-
-A case is closed when `statusCd` is 329 (Claim Submitted). Closed cases are left off the Case Status list and only counted on the Dashboard.
+`statusCd` **329** (Claim Submitted) is closed: omitted from Case Status, counted on the Dashboard.

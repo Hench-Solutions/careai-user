@@ -57,6 +57,8 @@ export type LeadDetail = {
   documentType: string;
   documentTypeNm: string;
   documentNo: string;
+  source: string;
+  insurerCd: string;
   treatmentType: string;
   treatmentTypeNm: string;
   department: string;

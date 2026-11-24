@@ -12,6 +12,7 @@ import type {
   MasterOption,
 } from "@/services/lead";
 
+import { useUser } from "@/components/auth/user-provider";
 import { CareaiCodeSearch } from "@/components/careai/careai-code-search";
 import { CareaiDateField } from "@/components/careai/careai-date-field";
 import { CareaiSelect } from "@/components/careai/careai-select";
@@ -162,6 +163,7 @@ function seed(value?: string, label?: string): MasterOption[] {
 
 /** Agent case registration wizard (BFF → PortalLead/register); with `lead` it edits that case (PortalLead/update). */
 export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
+  const user = useUser();
   const router = useRouter();
   const leaveTitleId = useId();
   const [step, setStep] = useState<WizardStep>(1);
@@ -450,13 +452,14 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
   }, []);
 
   const readLead = (form: HTMLFormElement) => {
-    const lead = Object.fromEntries(
+    const payload = Object.fromEntries(
       LEAD_FIELDS.map((field) => [field, formValue(form, field)]),
     ) as LeadRegistrationPayload;
-    lead.Dob ||= dobRef.current?.value?.trim() ?? "";
-    lead.CallingCd = normalizeCallingCode(lead.CallingCd ?? "");
-    lead.LeadType ||= LEAD_TYPES.normal;
-    return lead;
+    payload.Dob ||= dobRef.current?.value?.trim() ?? "";
+    payload.CallingCd = normalizeCallingCode(payload.CallingCd ?? "");
+    payload.LeadType ||= LEAD_TYPES.normal;
+    payload.InsurerCd ||= lead?.insurerCd ?? user?.userCd ?? "";
+    return payload;
   };
 
   /** Problems on the given steps, all at once; the wizard jumps to the first one's step. */
@@ -650,6 +653,11 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
           noValidate
         >
           <input type="hidden" name="Source" value={agentSource} />
+          <input
+            type="hidden"
+            name="InsurerCd"
+            value={lead?.insurerCd ?? user?.userCd ?? ""}
+          />
           {stepError ?
             <p
               className="mb-4 rounded-[10px] bg-[#fde8e8] px-3.5 py-2.5 text-[13px] font-semibold text-care-red"
