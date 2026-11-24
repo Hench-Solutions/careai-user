@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
 import { PortalSidebar } from "@/components/portal/portal-sidebar";
-import { careaiMockAgent, careaiMockMember } from "@/config/careai-mock";
 import {
   getAgentNavSections,
   getPatientNavSections,
@@ -24,11 +23,11 @@ const backdropClass = (show: boolean) =>
 const PORTALS = {
   agent: {
     getSections: getAgentNavSections,
-    footerRole: careaiMockAgent.organization,
+    footerRole: "Agent",
   },
   patient: {
     getSections: getPatientNavSections,
-    footerRole: careaiMockMember.accountLabel,
+    footerRole: "Patient",
   },
 } as const;
 

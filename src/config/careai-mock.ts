@@ -4,11 +4,6 @@
 
 export const careaiMockMember = {
   displayName: "Member",
-  accountLabel: "Prospera Global",
-} as const;
-
-export const careaiMockAgent = {
-  organization: "Prospera Global",
 } as const;
 
 type AgentInvoiceStatus = "paid" | "pending" | "overdue";

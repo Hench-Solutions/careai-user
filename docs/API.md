@@ -137,19 +137,63 @@ Search row fields plus full registration codes and names, and `documents[]`. HTT
 
 ### `POST /PortalLead/update`
 
-Same JSON body as register plus `"ClaimNo"`. Allowed only while the lead's `statusGrp` is `301`.
+Same shape as register, with `ClaimNo` set. Allowed only while the lead's `statusGrp` is `301`.
+
+```json
+{
+  "ClaimNo": "TID262700107",
+  "FirstName": "Asha",
+  "LastName": "Kapoor",
+  "EmailId": "asha@example.com",
+  "Dob": "1990-01-15",
+  "Gender": "F",
+  "Nationality": "IN",
+  "CallingCd": "+91",
+  "MobileNo": "9876543210",
+  "LeadType": "Normal",
+  "InsurerCd": "AG001",
+  "PatientLocation": "IN",
+  "DocumentType": "303",
+  "DocumentNo": "P1234567",
+  "TreatmentType": "TT01",
+  "Department": "D01",
+  "ProviderCd": "PRV01",
+  "BranchCd": "B01",
+  "DoctorCd": "DR01",
+  "Diagnosis": "...",
+  "Treatment": "...",
+  "CaseNote": "...",
+  "IcdCode": "I10",
+  "IcdDesc": "Essential hypertension",
+  "CptCode": "99213",
+  "CptDesc": "Office visit",
+  "PaymentMode": "PM01",
+  "Guarantor": "G01"
+}
+```
+
+```json
+{ "member_Id": "MEM26270107", "claim_No": "TID262700107" }
+```
 
 ### `POST /PortalLead/upload-documents`
 
-`multipart/form-data`. Field names match `UploadDocumentsRequest` (camelCase).
+`multipart/form-data`. Field names are camelCase; file parts are binary, not JSON. Shape:
 
-| Field | Notes |
-| ----- | ----- |
-| `claimNo`, `memberId` | From register response |
-| `idDocument` | Optional if medical files are included |
-| `idDocCd`, `idDocNm` | Required when `idDocument` is sent (`idDocCd` > 0); portal uses `303` and `ID Document` by default |
-| `medicalReports` | One or more files |
-| `medicalDocCd`, `medicalDocNm` | Required when any medical file is sent (`medicalDocCd` > 0); portal uses `316` and `Medical Report` by default |
+```json
+{
+  "claimNo": "TID262700107",
+  "memberId": "MEM26270107",
+  "idDocument": "<file>",
+  "idDocCd": 303,
+  "idDocNm": "ID Document",
+  "medicalReports": ["<file>", "<file>"],
+  "medicalDocCd": 316,
+  "medicalDocNm": "Medical Report"
+}
+```
+
+`claimNo` and `memberId` come from the register response. `idDocument` is optional when medical files are included; `idDocCd` and `idDocNm` are required when `idDocument` is sent (`idDocCd` > 0). `medicalDocCd` and `medicalDocNm` are required when any `medicalReports` file is sent (`medicalDocCd` > 0). Portal defaults: `303` / `ID Document`, `316` / `Medical Report`.
 
 Allowed types: `.pdf .jpg .jpeg .png .doc .docx`; max 10 MB per file; files must be non-empty. At least one of `idDocument` or `medicalReports` is required. Case must belong to the agent (`claimNo` / `memberId` match).
 
