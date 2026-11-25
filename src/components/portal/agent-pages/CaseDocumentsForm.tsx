@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { portalButtonClass } from "@/components/ui/button";
 import { FileInput } from "@/components/ui/file-input";
 import { Panel } from "@/components/ui/panel";
-import { LEAD_MESSAGES, LEAD_UPLOAD_EXTENSIONS } from "@/config/lead";
+import { LEAD_UPLOAD_EXTENSIONS } from "@/config/lead";
 import { ID_FILE, MEDICAL_FILES, validateUploads } from "@/lib/lead/validate";
 import { cn } from "@/lib/utils";
 import { uploadLeadDocuments } from "@/services/lead";
@@ -57,31 +57,20 @@ export function CaseDocumentsForm({
     setProblems([]);
     setResult(null);
     setUploading(true);
-    try {
-      const upload = await uploadLeadDocuments({
-        claimNo,
-        memberId,
-        idDocument: id,
-        medicalReports: medical,
-      });
-      setResult({
-        uploaded: upload.uploaded ?? [],
-        errors: upload.errors ?? [],
-      });
-      form.reset();
-      router.refresh();
-      setIdName("");
-      setMedicalNames("");
-    } catch (error) {
-      setResult({
-        uploaded: [],
-        errors: [
-          error instanceof Error ? error.message : LEAD_MESSAGES.uploadFailed,
-        ],
-      });
-    } finally {
-      setUploading(false);
-    }
+    const upload = await uploadLeadDocuments({
+      claimNo,
+      memberId,
+      idDocument: id,
+      medicalReports: medical,
+    });
+    setResult(upload);
+    setUploading(false);
+    // Nothing went through: keep the chosen files so they can be sent again.
+    if (upload.uploaded.length === 0) return;
+    form.reset();
+    router.refresh();
+    setIdName("");
+    setMedicalNames("");
   };
 
   return (

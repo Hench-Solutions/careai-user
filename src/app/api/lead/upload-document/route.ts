@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   const result = await postFormToApiWithPortalToken<LeadUploadDocumentsResult>(
     request,
-    API_ENDPOINTS.lead.portalUploadDocuments,
+    API_ENDPOINTS.lead.portalUploadDocument,
     form,
     LEAD_MESSAGES.uploadFailed,
   );

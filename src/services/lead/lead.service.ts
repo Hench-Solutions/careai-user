@@ -33,51 +33,52 @@ export function updateLead(
   );
 }
 
-export function uploadLeadDocuments(input: {
+/** The API takes one file per call, so each document is sent on its own; one failure does not stop the rest. */
+export async function uploadLeadDocuments(input: {
   claimNo: string;
   memberId: string;
   idDocument?: File | null;
-  idDocCd?: number | string;
-  idDocNm?: string;
   medicalReports?: FileList | File[] | null;
-  medicalDocCd?: number | string;
-  medicalDocNm?: string;
 }): Promise<LeadUploadDocumentsResult> {
-  const form = new FormData();
-  form.set(LEAD_UPLOAD_FIELDS.claimNo, input.claimNo);
-  form.set(LEAD_UPLOAD_FIELDS.memberId, input.memberId);
-  const medical = Array.from(input.medicalReports ?? []).filter(
-    (file) => file.size > 0,
-  );
-  if (input.idDocument && input.idDocument.size > 0) {
-    form.set(LEAD_UPLOAD_FIELDS.idDocument, input.idDocument);
-    form.set(
-      LEAD_UPLOAD_FIELDS.idDocCd,
-      String(input.idDocCd ?? LEAD_DOCUMENT_CODES.id),
-    );
-    form.set(
-      LEAD_UPLOAD_FIELDS.idDocNm,
-      input.idDocNm ?? LEAD_UPLOAD_DOC_NAMES.id,
-    );
-  }
-  if (medical.length > 0) {
-    form.set(
-      LEAD_UPLOAD_FIELDS.medicalDocCd,
-      String(input.medicalDocCd ?? LEAD_DOCUMENT_CODES.medical),
-    );
-    form.set(
-      LEAD_UPLOAD_FIELDS.medicalDocNm,
-      input.medicalDocNm ?? LEAD_UPLOAD_DOC_NAMES.medical,
-    );
-    for (const file of medical) {
-      form.append(LEAD_UPLOAD_FIELDS.medicalReports, file);
+  const documents: { file: File; type: keyof typeof LEAD_DOCUMENT_CODES }[] = [
+    ...(input.idDocument ?
+      [{ file: input.idDocument, type: "id" as const }]
+    : []),
+    ...Array.from(input.medicalReports ?? [], (file) => ({
+      file,
+      type: "medical" as const,
+    })),
+  ];
+
+  const result: LeadUploadDocumentsResult = {
+    uploaded: [],
+    errors: [],
+  };
+  for (const { file, type } of documents) {
+    if (file.size === 0) continue;
+    const form = new FormData();
+    form.set(LEAD_UPLOAD_FIELDS.claimNo, input.claimNo);
+    form.set(LEAD_UPLOAD_FIELDS.memberId, input.memberId);
+    form.set(LEAD_UPLOAD_FIELDS.docCd, LEAD_DOCUMENT_CODES[type]);
+    form.set(LEAD_UPLOAD_FIELDS.docNm, LEAD_UPLOAD_DOC_NAMES[type]);
+    form.set(LEAD_UPLOAD_FIELDS.file, file);
+    try {
+      const sent = await apiPostForm<LeadUploadDocumentsResult>(
+        BFF_ENDPOINTS.lead.uploadDocument,
+        form,
+        { failMessage: LEAD_MESSAGES.uploadFailed, allowEmpty: true },
+      );
+      result.uploaded.push(...(sent?.uploaded ?? []));
+      result.errors.push(
+        ...(sent?.errors ?? []).map((error) => `${file.name}: ${error}`),
+      );
+    } catch (error) {
+      const reason =
+        error instanceof Error ? error.message : LEAD_MESSAGES.uploadFailed;
+      result.errors.push(`${file.name}: ${reason}`);
     }
   }
-  return apiPostForm<LeadUploadDocumentsResult>(
-    BFF_ENDPOINTS.lead.uploadDocuments,
-    form,
-    { failMessage: LEAD_MESSAGES.uploadFailed, allowEmpty: true },
-  );
+  return result;
 }
 
 type MasterRow = { value: string; text: string };

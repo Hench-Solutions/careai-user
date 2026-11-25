@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
   },
   lead: {
     portalRegister: "/PortalLead/register",
-    portalUploadDocuments: "/PortalLead/upload-documents",
+    portalUploadDocument: "/PortalLead/upload-document",
     portalUpdate: "/PortalLead/update",
     portalSearch: "/PortalLead/search",
     portalDocument: "/PortalLead/document",
@@ -30,7 +30,7 @@ export const BFF_ENDPOINTS = {
   },
   lead: {
     register: "/api/lead/register",
-    uploadDocuments: "/api/lead/upload-documents",
+    uploadDocument: "/api/lead/upload-document",
     update: "/api/lead/update",
     document: "/api/lead/document",
   },

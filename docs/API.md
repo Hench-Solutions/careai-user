@@ -8,16 +8,16 @@ CareAi .NET API used by the agent portal. Full schemas: Swagger at the API root 
 
 ## Screens → endpoints
 
-| Screen                                                     | Calls                                                                                       |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Sign in                                                    | `POST /Auth/portal-login`                                                                   |
-| Session                                                    | `GET /Auth/portal-me`                                                                       |
-| Patient sign up                                            | `POST /Auth/patient-signup`                                                                 |
-| Dashboard, Case Status, Action Required, registration list | `GET /PortalLead/search`                                                                    |
-| Upload / edit case                                         | `GET /PortalLead/{claimNo}`, `POST /PortalLead/upload-documents`, `POST /PortalLead/update` |
-| New case                                                   | `POST /PortalLead/register`, then upload                                                    |
-| File download                                              | `GET /PortalLead/document?claimNo=&fileName=`                                               |
-| Form dropdowns                                             | `GET /PortalMaster/dropdown`, `GET /Master/items`, `GET /Master/code-search`                |
+| Screen                                                     | Calls                                                                                      |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Sign in                                                    | `POST /Auth/portal-login`                                                                  |
+| Session                                                    | `GET /Auth/portal-me`                                                                      |
+| Patient sign up                                            | `POST /Auth/patient-signup`                                                                |
+| Dashboard, Case Status, Action Required, registration list | `GET /PortalLead/search`                                                                   |
+| Upload / edit case                                         | `GET /PortalLead/{claimNo}`, `POST /PortalLead/upload-document`, `POST /PortalLead/update` |
+| New case                                                   | `POST /PortalLead/register`, then upload                                                   |
+| File download                                              | `GET /PortalLead/document?claimNo=&fileName=`                                              |
+| Form dropdowns                                             | `GET /PortalMaster/dropdown`, `GET /Master/items`, `GET /Master/code-search`               |
 
 Referral & Invoice and patient-only demo pages: no API.
 
@@ -176,30 +176,33 @@ Same shape as register, with `ClaimNo` set. Allowed only while the lead's `statu
 { "member_Id": "MEM26270107", "claim_No": "TID262700107" }
 ```
 
-### `POST /PortalLead/upload-documents`
+### `POST /PortalLead/upload-document`
 
-`multipart/form-data`. Field names are camelCase; file parts are binary, not JSON. Shape:
+Uploads **one file per call**; call it once for each document. Same `multipart/form-data` fields as staff `POST /Lead/upload-document`. The portal path needs the agent's Bearer token, and the case must belong to that agent (`404` otherwise).
 
-```json
-{
-  "claimNo": "TID262700107",
-  "memberId": "MEM26270107",
-  "idDocument": "<file>",
-  "idDocCd": 303,
-  "idDocNm": "ID Document",
-  "medicalReports": ["<file>", "<file>"],
-  "medicalDocCd": 316,
-  "medicalDocNm": "Medical Report"
-}
+| Field      | Value                                       |
+| ---------- | ------------------------------------------- |
+| `claimNo`  | `claim_No` from register                    |
+| `memberId` | `member_Id` from register                   |
+| `docCd`    | `303` = ID document, `316` = medical report |
+| `docNm`    | `ID Document` or `Medical Report`           |
+| `file`     | one file                                    |
+
+All five are required. Allowed types: `.pdf .jpg .jpeg .png .doc .docx`; at most 10 MB; not empty.
+
+```bash
+curl -X POST "$API/PortalLead/upload-document" -H "Authorization: Bearer $TOKEN" \
+  -F claimNo=TID262700107 -F memberId=MEM26270107 \
+  -F docCd=316 -F docNm="Medical Report" -F file=@report.pdf
 ```
 
-`claimNo` and `memberId` come from the register response. `idDocument` is optional when medical files are included; `idDocCd` and `idDocNm` are required when `idDocument` is sent (`idDocCd` > 0). `medicalDocCd` and `medicalDocNm` are required when any `medicalReports` file is sent (`medicalDocCd` > 0). Portal defaults: `303` / `ID Document`, `316` / `Medical Report`. These are the document categories (fixed values); they are not the `DocumentType` code in the register body (`DT0001` = Passport and so on), which says which ID the patient holds.
-
-Allowed types: `.pdf .jpg .jpeg .png .doc .docx`; max 10 MB per file; files must be non-empty. At least one of `idDocument` or `medicalReports` is required. Case must belong to the agent (`claimNo` / `memberId` match).
-
 ```json
-{ "uploaded": ["passport.pdf"], "errors": [] }
+{ "uploaded": ["261125184623175.pdf"], "errors": [] }
 ```
+
+A rejected type or size comes back as `200` with the reason in `errors`, so check `errors` after every call. A missing field gets `400`.
+
+`docCd` is the document category. It is not the `DocumentType` code in the register body (`DT0001` = Passport and so on), which says which ID the patient holds.
 
 ### `GET /PortalLead/document?claimNo=&fileName=`
 

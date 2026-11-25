@@ -515,27 +515,15 @@ export function AgentCaseRegistrationContent({ lead }: { lead?: LeadDetail }) {
       const medFiles = medFileRef.current?.files ?? null;
       if (mem && tid && (idFile || (medFiles && medFiles.length > 0))) {
         setUploadingDocs(true);
-        try {
-          const upload = await uploadLeadDocuments({
+        setUploadResult(
+          await uploadLeadDocuments({
             claimNo: tid,
             memberId: mem,
             idDocument: idFile,
             medicalReports: medFiles,
-          });
-          setUploadResult({
-            uploaded: upload.uploaded ?? [],
-            errors: upload.errors ?? [],
-          });
-        } catch (err) {
-          setUploadResult({
-            uploaded: [],
-            errors: [
-              err instanceof Error ? err.message : LEAD_MESSAGES.uploadFailed,
-            ],
-          });
-        } finally {
-          setUploadingDocs(false);
-        }
+          }),
+        );
+        setUploadingDocs(false);
       }
 
       setDirty(false);

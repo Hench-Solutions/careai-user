@@ -10,8 +10,8 @@ export type LeadRegistrationResult = {
 };
 
 export type LeadUploadDocumentsResult = {
-  uploaded?: string[];
-  errors?: string[];
+  uploaded: string[];
+  errors: string[];
 };
 
 export type MasterOption = { value: string; label: string };

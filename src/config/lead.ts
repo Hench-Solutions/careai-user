@@ -41,19 +41,18 @@ export const LEAD_FIELDS = [
 
 export type LeadField = (typeof LEAD_FIELDS)[number];
 
+/** Form fields of POST /PortalLead/upload-document (one file per call; same as staff /Lead/upload-document). */
 export const LEAD_UPLOAD_FIELDS = {
   claimNo: "claimNo",
   memberId: "memberId",
-  idDocument: "idDocument",
-  idDocCd: "idDocCd",
-  idDocNm: "idDocNm",
-  medicalReports: "medicalReports",
-  medicalDocCd: "medicalDocCd",
-  medicalDocNm: "medicalDocNm",
+  docCd: "docCd",
+  docNm: "docNm",
+  file: "file",
 } as const;
 
 export const LEAD_JSON_MAX_BYTES = 50_000;
-export const LEAD_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+/** One file (10 MB at most) plus the form fields. */
+export const LEAD_UPLOAD_MAX_BYTES = 11 * 1024 * 1024;
 
 /** Fields the agent must fill, with the label shown to them and the wizard step they sit on. */
 export const LEAD_REQUIRED_FIELDS = [
